@@ -3,7 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ChallengeTimer } from "./challenge-timer";
+import { ChallengeResults } from "./challenge-results";
 import { useSocket } from "@/components/providers/socket-provider";
+import { motion, AnimatePresence } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
+import { CheckCircle, User } from "lucide-react";
+
+type OpponentStatus = "writing" | "submitted" | "waiting" | "disconnected";
 
 interface ChallengeRoomProps {
   challengeId: string;
@@ -13,7 +19,7 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
   const [scenario, setScenario] = useState<any>(null);
   const [response, setResponse] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [opponentStatus, setOpponentStatus] = useState("Writing...");
+  const [opponentStatus, setOpponentStatus] = useState<OpponentStatus>("writing");
   const [results, setResults] = useState<any>(null);
   const { challengeSocket } = useSocket();
 
@@ -25,7 +31,7 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
     });
 
     challengeSocket.on("challenge:opponent_submitted", () => {
-      setOpponentStatus("Submitted");
+      setOpponentStatus("submitted");
     });
 
     challengeSocket.on("challenge:results", (data: any) => {
@@ -47,56 +53,112 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
   const handleSubmit = useCallback(() => {
     if (submitted) return;
     setSubmitted(true);
+    setOpponentStatus("waiting");
     challengeSocket?.emit("challenge:submit", { challengeId, response });
-    setOpponentStatus("Waiting for results...");
   }, [challengeSocket, challengeId, response, submitted]);
 
   if (results) {
     return (
-      <div className="space-y-4 text-center">
-        <h2 className="text-2xl font-bold">
-          {results.winner === "you" ? "You Win!" : "You Lose"}
-        </h2>
-        <div className="flex justify-center gap-8">
-          <div>
-            <p className="text-sm text-muted-foreground">Your Score</p>
-            <p className="text-3xl font-bold">{results.yourScore}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Opponent Score</p>
-            <p className="text-3xl font-bold">{results.opponentScore}</p>
-          </div>
-        </div>
-        <p className="text-primary">+{results.xpAwarded} XP</p>
-      </div>
+      <ChallengeResults
+        isWinner={results.winner === "you"}
+        yourScore={results.yourScore}
+        opponentScore={results.opponentScore}
+        xpAwarded={results.xpAwarded}
+        opponentResponse={results.opponentResponse}
+        challengeId={challengeId}
+      />
     );
   }
 
+  const opponentDotColor =
+    opponentStatus === "writing"
+      ? "bg-green-500 animate-pulse"
+      : opponentStatus === "submitted"
+        ? "bg-blue-500"
+        : opponentStatus === "disconnected"
+          ? "bg-muted-foreground"
+          : "bg-amber-500";
+
+  const opponentLabel =
+    opponentStatus === "writing"
+      ? "Writing..."
+      : opponentStatus === "submitted"
+        ? "Submitted"
+        : opponentStatus === "disconnected"
+          ? "Disconnected"
+          : "Waiting for results...";
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <motion.div
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+      className="space-y-4"
+    >
+      {/* Header row: timer + opponent status */}
+      <div className="glass-card rounded-xl px-5 py-3 flex items-center justify-between">
         <ChallengeTimer duration={300} onExpire={handleSubmit} />
-        <span className="text-sm text-muted-foreground">Opponent: {opponentStatus}</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <User className="h-4 w-4" />
+          <span>Opponent:</span>
+          <span className={`h-2 w-2 rounded-full ${opponentDotColor}`} />
+          <span className={opponentStatus === "submitted" ? "text-blue-400" : "text-muted-foreground"}>
+            {opponentLabel}
+          </span>
+          {opponentStatus === "submitted" && (
+            <CheckCircle className="h-4 w-4 text-blue-400" />
+          )}
+        </div>
       </div>
 
-      {scenario && (
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="whitespace-pre-wrap">{scenario.scenario_text || "Waiting for scenario..."}</p>
+      {/* Split-pane: scenario + response */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Scenario panel */}
+        <AnimatePresence>
+          {scenario ? (
+            <motion.div
+              key="scenario"
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              className="glass-card rounded-xl p-5"
+            >
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Scenario</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">{scenario.scenario_text}</p>
+              {scenario.question_prompt && (
+                <p className="mt-3 text-sm font-medium text-primary">{scenario.question_prompt}</p>
+              )}
+            </motion.div>
+          ) : (
+            <div className="glass-card rounded-xl p-5 text-center text-sm text-muted-foreground">
+              Waiting for scenario...
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Response area */}
+        <div className="glass-card rounded-xl p-5 space-y-3 flex flex-col">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Your Response</p>
+            <span className="text-xs text-muted-foreground">{response.length} chars</span>
+          </div>
+          <textarea
+            className="flex-1 w-full min-h-[200px] rounded-lg border border-border bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+            rows={8}
+            value={response}
+            onChange={(e) => setResponse(e.target.value)}
+            disabled={submitted}
+            placeholder="Write your analysis and trading decision..."
+          />
+          <Button
+            onClick={handleSubmit}
+            disabled={submitted || !response.trim()}
+            className={submitted ? "" : "gradient-primary-btn text-white border-0"}
+          >
+            {submitted ? "Submitted — waiting for results" : "Submit Response"}
+          </Button>
         </div>
-      )}
-
-      <textarea
-        className="w-full rounded-lg border border-border bg-card p-4 text-foreground"
-        rows={8}
-        value={response}
-        onChange={(e) => setResponse(e.target.value)}
-        disabled={submitted}
-        placeholder="Write your analysis..."
-      />
-
-      <Button onClick={handleSubmit} disabled={submitted || !response.trim()}>
-        {submitted ? "Submitted" : "Submit Response"}
-      </Button>
-    </div>
+      </div>
+    </motion.div>
   );
 }

@@ -25,11 +25,51 @@ export function ChallengeTimer({ duration, onExpire }: ChallengeTimerProps) {
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const color = timeLeft <= 60 ? "text-red-500" : timeLeft <= 120 ? "text-amber-500" : "text-green-500";
+  const formatted = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+  const radius = 28;
+  const circumference = 2 * Math.PI * radius;
+  const strokeColor =
+    timeLeft <= 60
+      ? "hsl(0,72%,51%)"
+      : timeLeft <= 120
+        ? "hsl(48,96%,53%)"
+        : "hsl(142,71%,45%)";
+  const dashOffset = circumference * (1 - timeLeft / duration);
 
   return (
-    <div className={`text-2xl font-mono font-bold ${color}`}>
-      {minutes}:{seconds.toString().padStart(2, "0")}
-    </div>
+    <svg width="64" height="64" aria-label={`Time remaining: ${formatted}`}>
+      <circle
+        cx="32"
+        cy="32"
+        r={radius}
+        fill="none"
+        stroke="hsl(var(--muted))"
+        strokeWidth="4"
+      />
+      <circle
+        cx="32"
+        cy="32"
+        r={radius}
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={dashOffset}
+        transform="rotate(-90 32 32)"
+        className="transition-all duration-1000 ease-linear"
+      />
+      <text
+        x="32"
+        y="32"
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="fill-foreground text-xs font-mono font-bold"
+        fontSize="10"
+      >
+        {formatted}
+      </text>
+    </svg>
   );
 }

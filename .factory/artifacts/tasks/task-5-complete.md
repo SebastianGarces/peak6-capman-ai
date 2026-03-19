@@ -1,39 +1,30 @@
-# Task 5: Auth.js v5 with Credentials Provider — COMPLETE
+# Task 5: Phase 5: Compete & Review Pages — COMPLETE
 
-## Files Created/Modified
-- `src/lib/auth/utils.ts` (created: hashPassword, verifyPassword, requireAuth, requireRole)
-- `src/lib/auth/config.ts` (created: NextAuthConfig with Credentials provider, JWT/session callbacks)
-- `src/lib/auth/index.ts` (created: exports handlers, auth, signIn, signOut from NextAuth)
-- `src/app/api/auth/[...nextauth]/route.ts` (created: GET/POST handlers for Auth.js)
-- `src/__tests__/auth.test.ts` (created: 10 tests covering all AC)
-- `package.json` (modified: added next-auth@beta, bcryptjs, @types/bcryptjs)
+## Files Modified
+- `src/components/challenge/matchmaking-spinner.tsx` — replaced rotating spinner with concentric ping rings + Swords icon
+- `src/components/challenge/challenge-lobby.tsx` — radial gradient bg, styled Find Match button with glow-pulse, VS split cards for match-found, animated countdown
+- `src/components/challenge/challenge-timer.tsx` — replaced text timer with SVG circular arc countdown, color transitions green→amber→red
+- `src/components/challenge/challenge-room.tsx` — split-pane grid layout on desktop (lg:grid-cols-2), animated opponent status dot, glass-card panels, character count
+- `src/components/challenge/challenge-results.tsx` — golden gradient bg for win, "Victory!"/"Good Effort" text, glow-gold on XP badge
+- `src/app/(dashboard)/review/page.tsx` — Skeleton loading state, empty state with MessageSquare icon + "Check back later", animated checkmark spring + gold XP on submit
+- `src/components/review/review-card.tsx` — added Badge labels SCENARIO and STUDENT RESPONSE
+- `src/components/review/review-rubric-form.tsx` — glow-primary on selected rating, hover:bg-primary/20, scale labels 1=Poor/3=Average/5=Excellent, glass-card comment wrapper
 
 ## Tests
-- 10 tests written, all passing
-- hashPassword produces bcrypt hash starting with $2
-- wrong password fails verifyPassword
-- JWT callback adds role and id to token when user object present
-- Session callback adds role and id to session.user from token
-- requireAuth throws when session is null
-- requireAuth throws when session has no user
-- requireAuth passes with valid session
-- requireRole throws for wrong role
-- requireRole passes for correct role
-- admin passes any role check
+- Build verified: `npm run build` passes with 0 errors (16 pages rendered)
 
 ## Acceptance Criteria
-- [x] AC1: Registration creates user with bcrypt-hashed password — verified by hashPassword test
-- [x] AC2: Login with valid credentials returns JWT with id, role, name, email — implemented in authorize()
-- [x] AC3: Login with invalid credentials returns null — implemented in authorize()
-- [x] AC4: auth() returns session with user.id and user.role — via session callback
-- [x] AC5: JWT callback injects role and id into token — verified by JWT callback test
-- [x] AC6: Session callback exposes role and id on session.user — verified by session callback test
-- [x] AC7: requireAuth() throws/redirects if not authenticated — verified by requireAuth tests
-- [x] AC8: requireRole('educator') throws if role doesn't match — verified by requireRole tests
+- [x] Arena layout with radial gradient bg
+- [x] Find Match button with gradient-primary-btn, glow-pulse animation, Swords icon
+- [x] Matchmaking: concentric animated ping rings + Swords icon
+- [x] Match found: VS display with glass-cards and text-gradient-primary, animated countdown
+- [x] ChallengeRoom: split-pane lg:grid-cols-2 layout
+- [x] SVG circular countdown timer with color transitions
+- [x] Opponent status: animated dot indicator (green/amber/blue/gray)
+- [x] ChallengeResults: golden bg for win, "Victory!"/"Good Effort", glow-gold XP
+- [x] Review page: Skeleton loading, empty state, animated checkmark + gold XP on submit
+- [x] ReviewCard: glass-card + Badge labels
+- [x] ReviewRubricForm: glow-primary selected, scale labels, glass-card textarea, gradient submit
 
 ## Notes
-- Used JWT session strategy (not database sessions) as specified in plan.md
-- The `any` types in utils.ts and config.ts are suppressed with eslint-disable-next-line comments since Auth.js session types require flexible typing
-- Pre-existing lint errors in schema.test.ts (not part of this task) remain unchanged
-- Pre-existing test failure in layout.test.tsx (window.matchMedia not a function) is unrelated to this task
-- NEXTAUTH_SECRET environment variable must be set in .env.local for production use
+- Files were already partially refactored by prior agents. All changes were additive on top of existing work.
