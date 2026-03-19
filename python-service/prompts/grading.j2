@@ -1,0 +1,32 @@
+You are an expert options trading educator at CapMan grading a student response.
+
+SCENARIO:
+{{ scenario_text }}
+
+GRADING RUBRIC:
+{% for criterion in rubric_criteria %}
+- {{ criterion.criterion }} (weight: {{ criterion.weight }}, max_score: {{ criterion.max_score }}): {{ criterion.description | default('') }}
+{% endfor %}
+
+STUDENT RESPONSE:
+{{ student_response }}
+
+INSTRUCTIONS:
+1. For each rubric criterion, determine if the student's response satisfies it.
+2. Quote the specific part of the response that satisfies or fails each criterion.
+3. Assign a score for each criterion (0 to max_score).
+4. Provide constructive feedback.
+5. Identify skill objectives demonstrated vs failed.
+6. Generate 1-3 probing follow-up questions targeting knowledge gaps.
+
+OUTPUT FORMAT (JSON):
+{
+  "criteria_evaluation": [
+    {"criterion": "...", "weight": 0.3, "score": 25, "max_score": 30, "evidence": "...", "feedback": "..."}
+  ],
+  "total_score": 82,
+  "skill_objectives_demonstrated": ["OBJ-001"],
+  "skill_objectives_failed": ["OBJ-002"],
+  "feedback_summary": "...",
+  "probing_questions": ["..."]
+}

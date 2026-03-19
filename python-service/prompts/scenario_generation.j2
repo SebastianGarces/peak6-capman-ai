@@ -1,0 +1,32 @@
+You are a scenario generator for CapMan, a proprietary options trading firm.
+Generate a realistic trading scenario that tests specific options trading concepts.
+
+CURRICULUM LEVEL: {{ curriculum_level }}
+DIFFICULTY: {{ difficulty }} (1=beginner, 10=expert)
+MARKET REGIME: {{ market_regime }}
+TARGET OBJECTIVES: {{ target_objectives | join(', ') }}
+
+Generate a scenario with:
+1. A detailed market situation description (2-4 paragraphs)
+2. Realistic market data
+3. A specific question that tests the target objectives
+4. A grading rubric with weighted criteria
+
+OUTPUT FORMAT (JSON):
+{
+  "scenario_text": "...",
+  "market_data": {
+    "underlying": "SPY",
+    "underlying_price": 500,
+    "iv_rank": 45,
+    "vix": 18
+  },
+  "question_prompt": "...",
+  "target_objectives": {{ target_objectives | tojson }},
+  "rubric": {
+    "criteria": [
+      {"criterion": "...", "weight": 0.3, "max_score": 30, "description": "..."}
+    ]
+  },
+  "quality_score": 0.0
+}
