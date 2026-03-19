@@ -1,0 +1,92 @@
+{
+  "factory_version": "1.0.0",
+  "spec_file": "/Users/sebastian/dev/gauntlet/peak6/.factory/brief-1773940537755.md",
+  "project_dir": "/Users/sebastian/dev/gauntlet/peak6",
+  "current_phase": "research",
+  "phases": {
+    "intake": {
+      "status": "completed",
+      "session_id": "",
+      "iterations": 1,
+      "started_at": "2026-03-19T17:15:37Z",
+      "completed_at": "2026-03-19T17:15:45Z"
+    },
+    "research": {
+      "status": "pending",
+      "session_id": "",
+      "iterations": 0,
+      "started_at": "",
+      "completed_at": ""
+    },
+    "architecture": {
+      "status": "pending",
+      "session_id": "",
+      "iterations": 0,
+      "started_at": "",
+      "completed_at": ""
+    },
+    "planning": {
+      "status": "pending",
+      "session_id": "",
+      "iterations": 0,
+      "started_at": "",
+      "completed_at": ""
+    },
+    "implementation": {
+      "status": "pending",
+      "session_id": "",
+      "iterations": 0,
+      "started_at": "",
+      "completed_at": "",
+      "tasks_total": 0,
+      "tasks_completed": 0
+    },
+    "verification": {
+      "status": "pending",
+      "session_id": "",
+      "iterations": 0,
+      "started_at": "",
+      "completed_at": ""
+    },
+    "pr_assembly": {
+      "status": "pending",
+      "session_id": "",
+      "iterations": 0,
+      "started_at": "",
+      "completed_at": ""
+    }
+  },
+  "gates": {
+    "research": {
+      "passed": false,
+      "feedback": "",
+      "evaluated_at": ""
+    },
+    "architecture": {
+      "passed": false,
+      "feedback": "",
+      "evaluated_at": ""
+    },
+    "plan": {
+      "passed": false,
+      "feedback": "",
+      "evaluated_at": ""
+    },
+    "implementation": {
+      "passed": false,
+      "feedback": "",
+      "evaluated_at": ""
+    },
+    "verification": {
+      "passed": false,
+      "feedback": "",
+      "evaluated_at": ""
+    }
+  },
+  "reroutes": [],
+  "max_iterations_per_phase": 5,
+  "started_at": "2026-03-19T17:15:37Z",
+  "updated_at": "2026-03-19T17:15:37Z",
+  "completed_at": "",
+  "final_verdict": ""
+}
