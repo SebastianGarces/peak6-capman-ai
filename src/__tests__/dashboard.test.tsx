@@ -25,7 +25,8 @@ describe("AppSidebar", () => {
 
   it("renders CapMan AI branding", () => {
     render(<AppSidebar />);
-    expect(screen.getByText("CapMan AI")).toBeInTheDocument();
+    const brandElements = screen.getAllByText("CapMan AI");
+    expect(brandElements.length).toBeGreaterThan(0);
   });
 });
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "motion/react";
 import { ScenarioReader } from "@/components/trading/scenario-reader";
 import { ResponseEditor } from "@/components/trading/response-editor";
 import { GradingResult } from "@/components/trading/grading-result";
@@ -77,7 +78,7 @@ export default function ScenarioAttemptPage() {
     try {
       const result = await submitResponse(attemptId, responseText);
       if ("error" in result) {
-        setError(result.error);
+        setError(result.error ?? null);
         setPhase("respond");
         return;
       }
@@ -115,76 +116,110 @@ export default function ScenarioAttemptPage() {
         </div>
       )}
 
-      {/* Phase 1: Read */}
-      {phase === "read" && (
-        <div className="space-y-4">
-          {scenarioData && (
-            <ScenarioReader
-              scenarioText={scenarioData.scenarioText}
-              marketData={scenarioData.marketData as any}
-            />
-          )}
-          {scenarioData?.questionPrompt && (
-            <div className="rounded-lg border border-border bg-card p-4">
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Your Task
-              </h3>
-              <p className="text-sm">{scenarioData.questionPrompt}</p>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={handleStartResponse}
-            className="w-full rounded-md bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+      <AnimatePresence mode="wait">
+        {/* Phase 1: Read */}
+        {phase === "read" && (
+          <motion.div
+            key="read"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
           >
-            Start Response
-          </button>
-        </div>
-      )}
+            {scenarioData && (
+              <ScenarioReader
+                scenarioText={scenarioData.scenarioText}
+                marketData={scenarioData.marketData as any}
+              />
+            )}
+            {scenarioData?.questionPrompt && (
+              <div className="rounded-lg border border-border bg-card p-4">
+                <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Your Task
+                </h3>
+                <p className="text-sm">{scenarioData.questionPrompt}</p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleStartResponse}
+              className="w-full rounded-md bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Start Response
+            </button>
+          </motion.div>
+        )}
 
-      {/* Phase 2: Respond */}
-      {phase === "respond" && (
-        <div className="space-y-4">
-          {scenarioData && (
-            <ScenarioReader
-              scenarioText={scenarioData.scenarioText}
-              marketData={scenarioData.marketData as any}
+        {/* Phase 2: Respond */}
+        {phase === "respond" && (
+          <motion.div
+            key="respond"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
+            {scenarioData && (
+              <ScenarioReader
+                scenarioText={scenarioData.scenarioText}
+                marketData={scenarioData.marketData as any}
+              />
+            )}
+            <ResponseEditor onSubmit={handleSubmitResponse} />
+          </motion.div>
+        )}
+
+        {/* Phase 3: Grading */}
+        {phase === "grading" && (
+          <motion.div
+            key="grading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-center justify-center py-16 space-y-4"
+          >
+            <motion.div
+              className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             />
-          )}
-          <ResponseEditor onSubmit={handleSubmitResponse} />
-        </div>
-      )}
+            <p className="text-sm text-muted-foreground">Analyzing your response...</p>
+          </motion.div>
+        )}
 
-      {/* Phase 3: Grading */}
-      {phase === "grading" && (
-        <div className="flex flex-col items-center justify-center py-16 space-y-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Analyzing your response...</p>
-        </div>
-      )}
-
-      {/* Phase 4: Summary */}
-      {phase === "summary" && gradingData && (
-        <div className="space-y-4">
-          <GradingResult score={gradingData.score} feedback={gradingData.feedback} />
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => router.push(`/learn/${levelId}`)}
-              className="flex-1 rounded-md border border-border bg-card py-2.5 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              Back to Level
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/learn/${levelId}`)}
-              className="flex-1 rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Next Scenario
-            </button>
-          </div>
-        </div>
-      )}
+        {/* Phase 4: Summary */}
+        {phase === "summary" && gradingData && (
+          <motion.div
+            key="summary"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-4"
+          >
+            <GradingResult score={gradingData.score} feedback={gradingData.feedback} />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => router.push(`/learn/${levelId}`)}
+                className="flex-1 rounded-md border border-border bg-card py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Back to Level
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push(`/learn/${levelId}`)}
+                className="flex-1 rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Next Scenario
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

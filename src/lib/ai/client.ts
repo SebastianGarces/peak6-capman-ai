@@ -1,21 +1,36 @@
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8000";
 const INTERNAL_TOKEN = process.env.INTERNAL_API_TOKEN || "";
 
-async function aiRequest<T>(path: string, body: Record<string, unknown>): Promise<T> {
-  const res = await fetch(`${AI_SERVICE_URL}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-internal-token": INTERNAL_TOKEN,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    throw new Error(`AI service error: ${res.status} ${res.statusText}`);
+export class AIServiceUnavailableError extends Error {
+  constructor(message: string = "AI service temporarily unavailable") {
+    super(message);
+    this.name = "AIServiceUnavailableError";
   }
+}
 
-  return res.json();
+async function aiRequest<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  try {
+    const res = await fetch(`${AI_SERVICE_URL}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-token": INTERNAL_TOKEN,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!res.ok) {
+      throw new Error(`AI service error: ${res.status} ${res.statusText}`);
+    }
+
+    return res.json();
+  } catch (err) {
+    if (err instanceof TypeError || (err instanceof DOMException && err.name === "AbortError")) {
+      throw new AIServiceUnavailableError();
+    }
+    throw err;
+  }
 }
 
 export async function gradeResponse(params: {

@@ -1,9 +1,16 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
 from config import settings
 from routers import scenarios, grading, rag
+
+
+async def verify_internal_token(x_internal_token: str = Header(default="")):
+    if not settings.internal_api_token:
+        return  # No token configured, skip validation (dev mode)
+    if x_internal_token != settings.internal_api_token:
+        raise HTTPException(status_code=401, detail="Invalid internal token")
 
 db_pool = None
 
@@ -29,9 +36,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(scenarios.router)
-app.include_router(grading.router)
-app.include_router(rag.router)
+app.include_router(scenarios.router, dependencies=[Depends(verify_internal_token)])
+app.include_router(grading.router, dependencies=[Depends(verify_internal_token)])
+app.include_router(rag.router, dependencies=[Depends(verify_internal_token)])
 
 @app.get("/api/health")
 async def health():

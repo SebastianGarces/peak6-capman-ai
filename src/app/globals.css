@@ -132,4 +132,32 @@
   html {
     @apply font-sans;
   }
+  /* Focus-visible ring for keyboard navigation (Task 51) */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  /* Ensure interactive elements have adequate touch targets */
+  button, a, input, select, textarea, [role="button"] {
+    min-height: 2.75rem; /* 44px touch target */
+  }
+  /* Compact inline elements exempt from min-height */
+  nav a, .inline-link {
+    min-height: auto;
+  }
+}
+
+/* Skip navigation link for accessibility (Task 53) */
+.skip-nav {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  padding: 0.5rem 1rem;
+  z-index: 100;
+  transition: top 0.15s;
+}
+.skip-nav:focus {
+  top: 0;
 }

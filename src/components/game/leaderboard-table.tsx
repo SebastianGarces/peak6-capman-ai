@@ -22,14 +22,14 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div className="overflow-x-auto -mx-2 px-2">
+      <table className="w-full min-w-[400px]">
         <thead>
           <tr className="border-b border-border text-left text-sm text-muted-foreground">
-            <th className="pb-2 pr-4">Rank</th>
-            <th className="pb-2 pr-4">Name</th>
-            <th className="pb-2 pr-4">Level</th>
-            <th className="pb-2 text-right">XP</th>
+            <th className="pb-2 pr-4" scope="col">Rank</th>
+            <th className="pb-2 pr-4" scope="col">Name</th>
+            <th className="pb-2 pr-4" scope="col">Level</th>
+            <th className="pb-2 text-right" scope="col">XP</th>
           </tr>
         </thead>
         <tbody>
