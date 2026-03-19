@@ -51,17 +51,17 @@ export async function TopBar() {
   const initials = userName.charAt(0).toUpperCase();
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-white/[0.06] bg-card/80 backdrop-blur-sm px-4">
+    <header className="flex h-14 items-center justify-between border-b border-[hsl(220,30%,20%)] bg-[hsl(222,45%,8%)] px-4">
       <GamificationBar xp={xp} level={level} streak={streak} levelName={levelName} />
       <div className="flex items-center gap-2">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-white/[0.04] transition-colors">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+          <DropdownMenuTrigger className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-white/10 transition-colors">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-primary/20 text-primary text-sm font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-foreground">{userName}</span>
+            <span className="text-sm font-medium text-white">{userName}</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem>

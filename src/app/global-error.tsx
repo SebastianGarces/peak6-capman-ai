@@ -1,9 +1,14 @@
 "use client";
 
-// Note: global-error.tsx must define its own <html> and <body> tags
-// because it replaces the root layout when active.
-// Uses inline styles only — no theme provider or context available.
-export default function GlobalError() {
+// global-error.tsx must render its own <html> and <body> — it replaces the root layout.
+// No theme provider or Tailwind context available; use inline styles only.
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
     <html lang="en">
       <body
@@ -14,43 +19,95 @@ export default function GlobalError() {
           alignItems: "center",
           justifyContent: "center",
           padding: "2rem",
-          background: "#0a0a0a",
-          color: "#ededed",
+          background: "hsl(222, 47%, 6%)",
+          color: "hsl(210, 40%, 96%)",
           fontFamily: "system-ui, sans-serif",
         }}
       >
         <div
           style={{
-            borderRadius: "0.5rem",
-            border: "1px solid rgba(239,68,68,0.3)",
-            background: "rgba(239,68,68,0.05)",
-            padding: "2rem",
+            borderRadius: "0.75rem",
+            border: "1px solid rgba(255,255,255,0.06)",
+            background: "hsl(222, 30%, 10% / 0.8)",
+            backdropFilter: "blur(12px)",
+            padding: "2.5rem",
             textAlign: "center",
             maxWidth: "28rem",
+            width: "100%",
           }}
         >
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#ef4444" }}>
-            Something went wrong
-          </h2>
-          <p style={{ marginTop: "0.5rem", fontSize: "0.875rem", color: "#a1a1aa" }}>
-            A critical error occurred. Please try refreshing the page.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
+          {/* CapMan AI branding */}
+          <p
             style={{
-              marginTop: "1rem",
-              borderRadius: "0.375rem",
-              background: "#6366f1",
-              padding: "0.5rem 1rem",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
+              fontSize: "1.125rem",
+              fontWeight: 700,
+              background: "linear-gradient(to right, hsl(142,71%,45%), hsl(160,60%,50%))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              marginBottom: "1.5rem",
             }}
           >
-            Try Again
-          </button>
+            CapMan AI
+          </p>
+
+          <h2
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: 600,
+              color: "hsl(210, 40%, 96%)",
+              marginBottom: "0.5rem",
+            }}
+          >
+            Critical Error
+          </h2>
+          <p style={{ fontSize: "0.875rem", color: "hsl(215, 20%, 65%)", marginBottom: "0.25rem" }}>
+            A critical error occurred. Your session data is safe.
+          </p>
+          {error.digest && (
+            <p
+              style={{
+                fontSize: "0.7rem",
+                fontFamily: "monospace",
+                color: "hsl(215, 20%, 50%)",
+                marginBottom: "1rem",
+              }}
+            >
+              Error: {error.digest}
+            </p>
+          )}
+
+          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginTop: "1.5rem" }}>
+            <button
+              onClick={reset}
+              style={{
+                borderRadius: "0.5rem",
+                background: "linear-gradient(to right, hsl(142,71%,45%), hsl(160,60%,45%))",
+                padding: "0.5rem 1.25rem",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: "#fff",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => { window.location.href = "/"; }}
+              style={{
+                borderRadius: "0.5rem",
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.12)",
+                padding: "0.5rem 1.25rem",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: "hsl(210, 40%, 96%)",
+                cursor: "pointer",
+              }}
+            >
+              Go Home
+            </button>
+          </div>
         </div>
       </body>
     </html>

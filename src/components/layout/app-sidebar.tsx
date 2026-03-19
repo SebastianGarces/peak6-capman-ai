@@ -21,7 +21,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
 
   return (
     <>
-      <div className="flex h-14 items-center justify-between border-b border-white/[0.06] px-4">
+      <div className="flex h-14 items-center justify-between border-b border-[hsl(220,30%,20%)] px-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
           <span className="text-xl font-bold text-gradient-primary">CapMan AI</span>
@@ -45,22 +45,22 @@ function NavContent({ onClose }: { onClose?: () => void }) {
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors min-h-[44px] ${
+              className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] ${
                 isActive
-                  ? "border-l-2 border-primary bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-white/[0.04]"
+                  ? "text-primary"
+                  : "text-slate-400 hover:text-white hover:bg-white/10"
               }`}
               aria-current={isActive ? "page" : undefined}
             >
               {isActive && (
                 <motion.div
                   layoutId="active-nav"
-                  className="absolute inset-0 rounded-lg bg-primary/10"
+                  className="absolute inset-0 rounded-lg bg-primary/25 border border-primary/30"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
-              <Icon className="relative h-5 w-5" />
-              <span className="relative">{item.label}</span>
+              <Icon className="relative z-10 h-5 w-5" />
+              <span className="relative z-10">{item.label}</span>
             </Link>
           );
         })}
@@ -102,10 +102,7 @@ export function AppSidebar() {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-white/[0.06] md:hidden"
-              style={{
-                background: "linear-gradient(to bottom, hsl(222,30%,9%), hsl(222,30%,7%))",
-              }}
+              className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[hsl(220,30%,20%)] bg-[hsl(230,45%,9%)] md:hidden"
             >
               <NavContent onClose={() => setMobileOpen(false)} />
             </motion.aside>
@@ -115,10 +112,7 @@ export function AppSidebar() {
 
       {/* Desktop sidebar */}
       <aside
-        className="hidden md:flex h-full w-64 flex-col border-r border-white/[0.06]"
-        style={{
-          background: "linear-gradient(to bottom, hsl(222,30%,9%), hsl(222,30%,7%))",
-        }}
+        className="hidden md:flex h-full w-64 flex-col border-r border-[hsl(220,30%,20%)] bg-[hsl(230,45%,9%)]"
       >
         <NavContent />
       </aside>

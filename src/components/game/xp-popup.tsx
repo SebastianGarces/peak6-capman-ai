@@ -13,10 +13,15 @@ export function XpPopup({ amount, show }: XpPopupProps) {
       {show && (
         <motion.div
           initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: 1, y: -30 }}
-          exit={{ opacity: 0, y: -60 }}
-          transition={{ duration: 1.5 }}
-          className="pointer-events-none absolute text-lg font-bold text-primary"
+          animate={{ opacity: 1, y: -40 }}
+          exit={{ opacity: 0, y: -80 }}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 18,
+            mass: 0.8,
+          }}
+          className="pointer-events-none absolute text-2xl font-bold text-amber-400 glow-gold"
         >
           +{amount} XP!
         </motion.div>

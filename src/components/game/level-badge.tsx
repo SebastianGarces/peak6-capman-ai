@@ -6,15 +6,15 @@ interface LevelBadgeProps {
 
 function getTierClasses(level: number): { bg: string; text: string } {
   if (level >= 10) {
-    return { bg: "bg-cyan-400/20", text: "text-cyan-300" };
+    return { bg: "bg-cyan-950 border border-cyan-700", text: "text-cyan-300" };
   }
   if (level >= 7) {
-    return { bg: "bg-yellow-500/20", text: "text-yellow-400" };
+    return { bg: "bg-yellow-950 border border-yellow-700", text: "text-yellow-300" };
   }
   if (level >= 4) {
-    return { bg: "bg-slate-400/20", text: "text-slate-300" };
+    return { bg: "bg-slate-800 border border-slate-600", text: "text-slate-200" };
   }
-  return { bg: "bg-amber-700/20", text: "text-amber-500" };
+  return { bg: "bg-amber-950 border border-amber-800", text: "text-amber-400" };
 }
 
 export function LevelBadge({ level }: LevelBadgeProps) {

@@ -20,7 +20,7 @@ export function XpBar({ currentXp, currentLevel }: XpBarProps) {
       <span className="text-xs font-medium text-primary">
         {getLevelName(currentLevel)}
       </span>
-      <div className="relative h-2 w-32 overflow-hidden rounded-full bg-muted">
+      <div className="relative h-2.5 w-40 overflow-hidden rounded-full bg-muted">
         <motion.div
           className="absolute inset-y-0 left-0 rounded-full"
           initial={{ width: "0%" }}
@@ -30,10 +30,11 @@ export function XpBar({ currentXp, currentLevel }: XpBarProps) {
             background: "linear-gradient(to right, hsl(142 71% 45%), hsl(160 60% 50%))",
             backgroundSize: "200% 100%",
             animation: "shimmer 2s infinite",
+            boxShadow: "0 0 8px hsl(142 71% 45% / 0.6), 0 0 16px hsl(142 71% 45% / 0.3)",
           }}
         />
       </div>
-      <span className="text-xs text-muted-foreground">
+      <span className="text-xs font-medium text-slate-300">
         {currentXp} / {nextThreshold} XP
       </span>
     </div>

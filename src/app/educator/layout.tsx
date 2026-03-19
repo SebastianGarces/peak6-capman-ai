@@ -1,13 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-
-const educatorNav = [
-  { href: "/educator", label: "Overview" },
-  { href: "/educator/students", label: "Students" },
-  { href: "/educator/interventions", label: "Interventions" },
-  { href: "/educator/analytics", label: "Analytics" },
-];
+import { EducatorNav } from "./educator-nav";
 
 export default async function EducatorLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -19,26 +12,15 @@ export default async function EducatorLayout({ children }: { children: React.Rea
 
   return (
     <div className="flex h-screen">
-      <aside className="flex h-full w-56 flex-col border-r border-border bg-card">
-        <div className="flex h-14 items-center border-b border-border px-4">
-          <span className="text-lg font-bold text-amber-500">MTSS Dashboard</span>
+      <aside
+        className="flex h-full w-56 flex-col border-r border-[hsl(220,30%,20%)] bg-[hsl(230,45%,9%)]"
+      >
+        <div className="flex h-14 items-center border-b border-[hsl(220,30%,20%)] px-4">
+          <span className="text-lg font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+            MTSS Dashboard
+          </span>
         </div>
-        <nav className="flex-1 space-y-1 p-2">
-          {educatorNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="border-t border-border p-4">
-          <Link href="/" className="text-xs text-muted-foreground hover:text-foreground">
-            ← Back to Dashboard
-          </Link>
-        </div>
+        <EducatorNav />
       </aside>
       <div className="flex-1 overflow-y-auto p-6">
         {children}

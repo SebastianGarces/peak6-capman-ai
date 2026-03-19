@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { curriculumLevels, skillObjectives, scenarios, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
-import { PageHeader } from "@/components/layout/page-header";
 import { ScenarioCard } from "@/components/trading/scenario-card";
+import { Badge } from "@/components/ui/badge";
+import { Progress, ProgressTrack, ProgressIndicator } from "@/components/ui/progress";
 
 interface PageProps {
   params: Promise<{ levelId: string }>;
@@ -64,24 +67,42 @@ export default async function LevelDetailPage({ params }: PageProps) {
 
   return (
     <div>
-      <nav className="mb-4 text-sm text-muted-foreground">
-        <a href="/learn" className="hover:text-foreground">
+      {/* Breadcrumb */}
+      <nav className="mb-6 flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href="/learn" className="hover:text-foreground transition-colors">
           Learn
-        </a>
-        {" > "}
-        <span className="text-foreground">
+        </Link>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <span className="text-primary">
           Level {level.levelNumber}: {level.name}
         </span>
       </nav>
 
-      <PageHeader
-        title={`Level ${level.levelNumber}: ${level.name}`}
-        description={level.description}
-      />
-
-      <div className="mb-6 flex items-center gap-4 text-sm text-muted-foreground">
-        <span>Mastery Threshold: {level.masteryThreshold}%</span>
-        <span>Min Attempts: {level.minAttemptsRequired}</span>
+      {/* Level hero section */}
+      <div className="mb-8 flex items-start gap-4">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
+          {level.levelNumber}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold">{level.name}</h1>
+          <p className="mt-1 text-muted-foreground">{level.description}</p>
+          <div className="mt-3 flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">
+              Mastery threshold: {level.masteryThreshold}%
+            </span>
+            <Progress
+              value={level.masteryThreshold}
+              className="w-32"
+            >
+              <ProgressTrack className="h-1.5">
+                <ProgressIndicator />
+              </ProgressTrack>
+            </Progress>
+            <span className="text-xs text-muted-foreground">
+              Min attempts: {level.minAttemptsRequired}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Skill Objectives */}
@@ -92,14 +113,11 @@ export default async function LevelDetailPage({ params }: PageProps) {
         ) : (
           <ul className="space-y-2">
             {objectives.map((obj) => (
-              <li
-                key={obj.id}
-                className="rounded-lg border border-border bg-card p-3"
-              >
+              <li key={obj.id} className="glass-card rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
+                  <Badge variant="secondary" className="font-mono shrink-0">
                     {obj.code}
-                  </span>
+                  </Badge>
                   <div>
                     <p className="text-sm font-medium">{obj.name}</p>
                     <p className="text-xs text-muted-foreground">{obj.description}</p>

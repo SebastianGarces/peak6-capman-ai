@@ -1,4 +1,8 @@
-# Task 1: Phase 1: Layout Shell — Sidebar, TopBar, PageHeader, Dashboard Layout — COMPLETE
+# Task 1: Fix sidebar, topbar, and layout contrast — COMPLETE
+
+---
+
+## Contrast Fix Pass (2026-03-19)
 
 ## Files Created/Modified
 - src/components/layout/app-sidebar.tsx (modified: gradient bg, TrendingUp icon, text-gradient-primary branding, rounded-lg nav items, active border-l-2 + layoutId animated indicator, AnimatePresence mobile overlay/sidebar)
@@ -27,3 +31,7 @@
 ## Notes
 - DropdownMenuItem/DropdownMenuTrigger in this codebase use base-ui (not Radix), so `asChild` prop is not supported — used className directly on trigger and children inside items
 - Fixed pre-existing `src/lib/motion.ts` TS error that was blocking `npm run build`
+
+### Contrast Fix Notes
+- Educator layout is a server component (no `usePathname`), so per-link active state highlighting was not applied — all nav links use the same inactive style with updated hover opacity
+- Build verified: `npm run build` passes, 16/16 pages generated, zero errors

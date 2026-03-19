@@ -2,7 +2,7 @@
   "factory_version": "1.0.0",
   "spec_file": "/Users/sebastian/dev/gauntlet/peak6/.factory/brief-1773940537755.md",
   "project_dir": "/Users/sebastian/dev/gauntlet/peak6",
-  "current_phase": "verification",
+  "current_phase": "pr_assembly",
   "phases": {
     "intake": {
       "status": "completed",
@@ -42,18 +42,18 @@
       "tasks_completed": 0
     },
     "verification": {
-      "status": "in_progress",
-      "session_id": "",
+      "status": "completed",
+      "session_id": "5e8d81fd-2a2e-4b0c-95b0-63597a885bab",
       "iterations": 1,
       "started_at": "2026-03-19T18:43:40Z",
-      "completed_at": ""
+      "completed_at": "2026-03-19T19:30:58Z"
     },
     "pr_assembly": {
-      "status": "pending",
-      "session_id": "",
-      "iterations": 0,
-      "started_at": "",
-      "completed_at": ""
+      "status": "completed",
+      "session_id": "a4988a72-b035-4039-839b-9529d96b4649",
+      "iterations": 1,
+      "started_at": "2026-03-19T19:30:58Z",
+      "completed_at": "2026-03-19T19:35:48Z"
     }
   },
   "gates": {
@@ -78,9 +78,9 @@
       "evaluated_at": "2026-03-19T18:43:39Z"
     },
     "verification": {
-      "passed": false,
+      "passed": true,
       "feedback": "",
-      "evaluated_at": ""
+      "evaluated_at": "2026-03-19T19:30:58Z"
     },
     "intake": {
       "passed": true,
@@ -91,7 +91,7 @@
   "reroutes": [],
   "max_iterations_per_phase": 5,
   "started_at": "2026-03-19T17:15:37Z",
-  "updated_at": "2026-03-19T18:43:40Z",
-  "completed_at": "",
-  "final_verdict": ""
+  "updated_at": "2026-03-19T19:35:48Z",
+  "completed_at": "2026-03-19T19:35:48Z",
+  "final_verdict": "pass"
 }

@@ -20,13 +20,13 @@ export default async function EducatorOverview() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader title="MTSS Overview" description="Monitor learner progress and tier classifications" />
 
       <EngagementPanel dau={0} wau={0} avgSessionsPerWeek={0} challengeRate={0} />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
+        <div className="glass-card rounded-xl p-4 lg:col-span-1">
           <TierDistribution tier1Count={tier1} tier2Count={tier2} tier3Count={tier3} />
         </div>
       </div>

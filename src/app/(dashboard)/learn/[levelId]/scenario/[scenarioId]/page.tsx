@@ -3,12 +3,21 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { Check } from "lucide-react";
 import { ScenarioReader } from "@/components/trading/scenario-reader";
 import { ResponseEditor } from "@/components/trading/response-editor";
 import { GradingResult } from "@/components/trading/grading-result";
 import { startScenario, submitResponse } from "@/actions/scenario";
 
 type Phase = "read" | "respond" | "grading" | "summary";
+
+const PHASES: Phase[] = ["read", "respond", "grading", "summary"];
+const PHASE_LABELS: Record<Phase, string> = {
+  read: "Read",
+  respond: "Respond",
+  grading: "Grading",
+  summary: "Summary",
+};
 
 interface ScenarioData {
   id: string;
@@ -29,6 +38,59 @@ interface GradingData {
     }>;
     total_score: number;
   };
+}
+
+function PhaseIndicator({ currentPhase }: { currentPhase: Phase }) {
+  const currentIdx = PHASES.indexOf(currentPhase);
+
+  return (
+    <div className="flex items-center gap-0">
+      {PHASES.map((phase, idx) => {
+        const isCompleted = idx < currentIdx;
+        const isCurrent = idx === currentIdx;
+
+        return (
+          <div key={phase} className="flex items-center">
+            {/* Circle */}
+            <div
+              className={[
+                "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300",
+                isCompleted
+                  ? "bg-primary text-primary-foreground"
+                  : isCurrent
+                    ? "bg-primary/20 border-2 border-primary text-primary"
+                    : "bg-muted text-muted-foreground",
+              ].join(" ")}
+            >
+              {isCompleted ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <span>{idx + 1}</span>
+              )}
+            </div>
+            {/* Label below */}
+            <span
+              className={[
+                "ml-1.5 text-xs",
+                isCurrent ? "text-primary font-medium" : "text-muted-foreground",
+              ].join(" ")}
+            >
+              {PHASE_LABELS[phase]}
+            </span>
+            {/* Connecting line */}
+            {idx < PHASES.length - 1 && (
+              <div
+                className={[
+                  "mx-2 h-0.5 w-12 transition-all duration-300",
+                  idx < currentIdx ? "bg-primary" : "bg-muted",
+                ].join(" ")}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function ScenarioAttemptPage() {
@@ -92,22 +154,9 @@ export default function ScenarioAttemptPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Phase indicator */}
-      <div className="flex items-center gap-2 text-sm">
-        {(["read", "respond", "grading", "summary"] as Phase[]).map((p, idx) => (
-          <div key={p} className="flex items-center gap-2">
-            {idx > 0 && <span className="text-muted-foreground">/</span>}
-            <span
-              className={
-                phase === p
-                  ? "font-semibold text-primary"
-                  : "capitalize text-muted-foreground"
-              }
-            >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </span>
-          </div>
-        ))}
+      {/* Phase stepper indicator */}
+      <div className="flex items-center">
+        <PhaseIndicator currentPhase={phase} />
       </div>
 
       {error && (
@@ -144,7 +193,7 @@ export default function ScenarioAttemptPage() {
             <button
               type="button"
               onClick={handleStartResponse}
-              className="w-full rounded-md bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="w-full rounded-md gradient-primary-btn py-3 text-sm font-semibold text-white border-0 transition-opacity hover:opacity-90"
             >
               Start Response
             </button>
@@ -212,7 +261,7 @@ export default function ScenarioAttemptPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/learn/${levelId}`)}
-                className="flex-1 rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                className="flex-1 rounded-md gradient-primary-btn py-2.5 text-sm font-semibold text-white border-0 transition-opacity hover:opacity-90"
               >
                 Next Scenario
               </button>
