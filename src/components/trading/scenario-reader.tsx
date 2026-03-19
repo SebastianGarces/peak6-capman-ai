@@ -1,92 +1,69 @@
-interface MarketData {
-  underlying?: string;
-  underlying_price?: number;
-  [key: string]: unknown;
-}
+"use client";
+
+import { MarketDataPanel } from "@/components/trading/market-data-panel";
+import { Button } from "@/components/ui/button";
+import { BookOpen, ArrowRight } from "lucide-react";
 
 interface ScenarioReaderProps {
   scenarioText: string;
-  marketData: MarketData;
+  marketData: Record<string, unknown>;
+  questionPrompt?: string;
+  onBegin?: () => void;
 }
 
-function isNegativeNumber(val: unknown): boolean {
-  return typeof val === "number" && val < 0;
-}
-
-function isPositiveNumber(val: unknown): boolean {
-  return typeof val === "number" && val > 0;
-}
-
-function formatValue(val: unknown): string {
-  if (typeof val === "number") return val.toString();
-  if (typeof val === "string") return val;
-  return String(val);
-}
-
-export function ScenarioReader({ scenarioText, marketData }: ScenarioReaderProps) {
-  // Extract well-known fields first, then render remaining keys
-  const { underlying, underlying_price, ...rest } = marketData ?? {};
-
+export function ScenarioReader({
+  scenarioText,
+  questionPrompt,
+  marketData,
+  onBegin,
+}: ScenarioReaderProps) {
   return (
-    <div className="space-y-4">
-      {/* Scenario text card with header bar */}
-      <div className="glass-card rounded-lg overflow-hidden">
-        <div className="border-b border-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Scenario
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Scenario text — takes 2 columns */}
+        <div className="lg:col-span-2 space-y-5">
+          <div className="rounded-2xl border border-surface-border bg-surface p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted">
+                Scenario
+              </h3>
+            </div>
+            <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
+              {scenarioText}
+            </p>
+          </div>
+
+          {/* Question prompt */}
+          {questionPrompt && (
+            <div className="rounded-xl border border-primary/30 bg-primary-muted p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">
+                Your Task
+              </p>
+              <p className="text-sm text-text leading-relaxed">{questionPrompt}</p>
+            </div>
+          )}
         </div>
-        <div className="p-4">
-          <p className="text-sm leading-relaxed text-foreground">{scenarioText}</p>
+
+        {/* Market data panel */}
+        <div className="lg:col-span-1">
+          {Object.keys(marketData).length > 0 ? (
+            <MarketDataPanel marketData={marketData} />
+          ) : (
+            <div className="rounded-xl border border-surface-border bg-surface p-4 text-center">
+              <p className="text-xs text-text-dim">No market data provided.</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Market data */}
-      {marketData && (
-        <div className="glass-card rounded-lg overflow-hidden">
-          <div className="border-b border-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Market Data
-          </div>
-          <div className="p-4 space-y-1 font-mono text-sm">
-            {underlying !== undefined && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Underlying</span>
-                <span className="font-semibold">{String(underlying)}</span>
-              </div>
-            )}
-            {underlying_price !== undefined && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Price</span>
-                <span
-                  className={
-                    isNegativeNumber(underlying_price)
-                      ? "font-semibold text-red-400"
-                      : isPositiveNumber(underlying_price)
-                        ? "font-semibold text-emerald-400"
-                        : "font-semibold"
-                  }
-                >
-                  ${formatValue(underlying_price)}
-                </span>
-              </div>
-            )}
-            {Object.entries(rest).map(([key, val]) => (
-              <div key={key} className="flex justify-between">
-                <span className="text-muted-foreground capitalize">
-                  {key.replace(/_/g, " ")}
-                </span>
-                <span
-                  className={
-                    isNegativeNumber(val)
-                      ? "font-semibold text-red-400"
-                      : isPositiveNumber(val)
-                        ? "font-semibold text-emerald-400"
-                        : "font-semibold"
-                  }
-                >
-                  {formatValue(val)}
-                </span>
-              </div>
-            ))}
-          </div>
+      {/* CTA */}
+      {onBegin && (
+        <div className="flex justify-end pt-2">
+          <Button variant="primary" size="lg" onClick={onBegin} className="gap-2">
+            Begin Response
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
     </div>

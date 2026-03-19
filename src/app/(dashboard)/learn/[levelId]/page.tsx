@@ -1,151 +1,168 @@
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, BookOpen, Target, FileText } from "lucide-react";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { curriculumLevels, skillObjectives, scenarios, users } from "@/lib/db/schema";
-import { auth } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
-import { ScenarioCard } from "@/components/trading/scenario-card";
+import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Progress, ProgressTrack, ProgressIndicator } from "@/components/ui/progress";
+import { ScenarioCard } from "@/components/trading/scenario-card";
 
-interface PageProps {
+export default async function LevelDetailPage(props: {
   params: Promise<{ levelId: string }>;
-}
+}) {
+  const { levelId } = await props.params;
+  const levelNumber = parseInt(levelId, 10);
 
-export default async function LevelDetailPage({ params }: PageProps) {
-  const { levelId } = await params;
+  if (isNaN(levelNumber)) notFound();
 
-  const levelIdNum = parseInt(levelId, 10);
-  if (isNaN(levelIdNum)) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const userId = (session.user as any).id as string;
+
+  // Fetch user to check access
+  const [user] = await db
+    .select({ currentCurriculumLevel: users.currentCurriculumLevel })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) redirect("/login");
+
+  // Redirect if level is locked
+  if (levelNumber > user.currentCurriculumLevel) {
     redirect("/learn");
   }
 
-  const session = await auth();
-  const userId = (session?.user as any)?.id;
-
-  // Fetch user's current curriculum level
-  let currentCurriculumLevel = 1;
-  if (userId) {
-    const [user] = await db
-      .select({ currentCurriculumLevel: users.currentCurriculumLevel })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-    if (user) {
-      currentCurriculumLevel = user.currentCurriculumLevel;
-    }
-  }
-
-  // Fetch level info
+  // Fetch the curriculum level
   const [level] = await db
     .select()
     .from(curriculumLevels)
-    .where(eq(curriculumLevels.id, levelIdNum))
+    .where(eq(curriculumLevels.levelNumber, levelNumber))
     .limit(1);
 
-  if (!level) {
-    redirect("/learn");
-  }
-
-  // Check if user has unlocked this level
-  if (level.levelNumber > currentCurriculumLevel) {
-    redirect("/learn");
-  }
+  if (!level) notFound();
 
   // Fetch skill objectives for this level
   const objectives = await db
     .select()
     .from(skillObjectives)
-    .where(eq(skillObjectives.curriculumLevelId, levelIdNum));
+    .where(eq(skillObjectives.curriculumLevelId, level.id))
+    .orderBy(skillObjectives.code);
 
   // Fetch active scenarios for this level
-  const levelScenarios = await db
+  const activeScenarios = await db
     .select()
     .from(scenarios)
-    .where(and(eq(scenarios.curriculumLevelId, levelIdNum), eq(scenarios.isActive, true)));
+    .where(
+      and(
+        eq(scenarios.curriculumLevelId, level.id),
+        eq(scenarios.isActive, true),
+      ),
+    )
+    .orderBy(scenarios.difficulty);
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       {/* Breadcrumb */}
-      <nav className="mb-6 flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/learn" className="hover:text-foreground transition-colors">
-          Learn
+      <div className="mb-6">
+        <Link
+          href="/learn"
+          className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Curriculum</span>
         </Link>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        <span className="text-primary">
-          Level {level.levelNumber}: {level.name}
-        </span>
-      </nav>
+      </div>
 
-      {/* Level hero section */}
-      <div className="mb-8 flex items-start gap-4">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
-          {level.levelNumber}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold">{level.name}</h1>
-          <p className="mt-1 text-muted-foreground">{level.description}</p>
-          <div className="mt-3 flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">
-              Mastery threshold: {level.masteryThreshold}%
+      <PageHeader
+        title={level.name}
+        description={`Level ${level.levelNumber}`}
+        icon={BookOpen}
+      />
+
+      {/* Level description */}
+      <div className="mb-8 rounded-2xl border border-surface-border bg-surface p-6">
+        <p className="text-sm text-text-muted leading-relaxed">{level.description}</p>
+        <div className="mt-4 flex items-center gap-4 text-xs text-text-dim">
+          <span>
+            Mastery threshold:{" "}
+            <span className="font-semibold text-green font-mono">
+              {level.masteryThreshold}%
             </span>
-            <Progress
-              value={level.masteryThreshold}
-              className="w-32"
-            >
-              <ProgressTrack className="h-1.5">
-                <ProgressIndicator />
-              </ProgressTrack>
-            </Progress>
-            <span className="text-xs text-muted-foreground">
-              Min attempts: {level.minAttemptsRequired}
+          </span>
+          <span>
+            Min attempts:{" "}
+            <span className="font-semibold text-amber font-mono">
+              {level.minAttemptsRequired}
             </span>
-          </div>
+          </span>
         </div>
       </div>
 
-      {/* Skill Objectives */}
+      {/* Skill objectives */}
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Skill Objectives</h2>
+        <div className="mb-4 flex items-center gap-2">
+          <Target className="h-4 w-4 text-text-muted" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted">
+            Skill Objectives
+          </h2>
+          <Badge variant="default">{objectives.length}</Badge>
+        </div>
+
         {objectives.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No objectives for this level.</p>
+          <p className="text-sm text-text-dim">No objectives defined for this level yet.</p>
         ) : (
-          <ul className="space-y-2">
+          <div className="space-y-3">
             {objectives.map((obj) => (
-              <li key={obj.id} className="glass-card rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <Badge variant="secondary" className="font-mono shrink-0">
-                    {obj.code}
-                  </Badge>
-                  <div>
-                    <p className="text-sm font-medium">{obj.name}</p>
-                    <p className="text-xs text-muted-foreground">{obj.description}</p>
-                  </div>
+              <div
+                key={obj.id}
+                className="flex items-start gap-4 rounded-xl border border-surface-border bg-surface p-4"
+              >
+                <span className="inline-flex items-center rounded-md bg-lavender-muted border border-lavender/20 px-2.5 py-1 text-xs font-mono font-bold text-lavender flex-shrink-0">
+                  {obj.code}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-text">{obj.name}</p>
+                  <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
+                    {obj.description}
+                  </p>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </section>
 
       {/* Scenarios */}
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Available Scenarios</h2>
-        {levelScenarios.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">No scenarios available yet.</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Scenarios are generated periodically. Check back soon!
+        <div className="mb-4 flex items-center gap-2">
+          <FileText className="h-4 w-4 text-text-muted" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted">
+            Scenarios
+          </h2>
+          <Badge variant="default">{activeScenarios.length}</Badge>
+        </div>
+
+        {activeScenarios.length === 0 ? (
+          <div className="rounded-2xl border border-surface-border bg-surface p-10 text-center">
+            <FileText className="h-10 w-10 text-text-dim mx-auto mb-3" />
+            <p className="text-sm font-semibold text-text-muted">
+              No scenarios available for this level yet.
+            </p>
+            <p className="text-xs text-text-dim mt-1">
+              Check back soon — new scenarios are generated regularly.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {levelScenarios.map((scenario) => (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {activeScenarios.map((scenario) => (
               <ScenarioCard
                 key={scenario.id}
                 id={scenario.id}
-                levelId={levelIdNum}
+                levelId={levelNumber}
                 difficulty={scenario.difficulty}
                 marketRegime={scenario.marketRegime}
                 targetObjectives={scenario.targetObjectives as string[]}
