@@ -22,10 +22,15 @@ export function XpBar({ currentXp, currentLevel }: XpBarProps) {
       </span>
       <div className="relative h-2 w-32 overflow-hidden rounded-full bg-muted">
         <motion.div
-          className="absolute inset-y-0 left-0 rounded-full bg-primary"
+          className="absolute inset-y-0 left-0 rounded-full"
           initial={{ width: "0%" }}
           animate={{ width: `${Math.min(progress, 100)}%` }}
           transition={{ duration: 0.8, ease: "easeOut" }}
+          style={{
+            background: "linear-gradient(to right, hsl(142 71% 45%), hsl(160 60% 50%))",
+            backgroundSize: "200% 100%",
+            animation: "shimmer 2s infinite",
+          }}
         />
       </div>
       <span className="text-xs text-muted-foreground">
