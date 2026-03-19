@@ -13,6 +13,13 @@ vi.mock("@/lib/db", () => ({
         where: vi.fn(),
       })),
     })),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({
+          limit: vi.fn(() => [{ id: "attempt-123", scenarioId: "scenario-1", responseText: "", probingQuestions: [] }]),
+        })),
+      })),
+    })),
   },
 }));
 
