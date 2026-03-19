@@ -43,6 +43,32 @@ export const authConfig: NextAuthConfig = {
     signIn: "/login",
   },
   callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isAuthPage =
+        nextUrl.pathname === "/login" || nextUrl.pathname === "/register";
+
+      if (isAuthPage) {
+        if (isLoggedIn) return Response.redirect(new URL("/", nextUrl));
+        return true;
+      }
+
+      // Protect educator routes — require educator or admin role
+      if (
+        nextUrl.pathname.startsWith("/educator") ||
+        nextUrl.pathname.startsWith("/students") ||
+        nextUrl.pathname.startsWith("/interventions") ||
+        nextUrl.pathname.startsWith("/analytics")
+      ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const role = (auth?.user as any)?.role;
+        if (role !== "educator" && role !== "admin") {
+          return Response.redirect(new URL("/", nextUrl));
+        }
+      }
+
+      return isLoggedIn;
+    },
     jwt({ token, user }) {
       if (user) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
