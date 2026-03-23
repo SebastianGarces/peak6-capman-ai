@@ -1,6 +1,7 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { motion } from "motion/react";
+import { staggerContainer, staggerItem } from "@/lib/motion";
 
 interface LeaderboardEntry {
   id: string;
@@ -16,68 +17,97 @@ interface LeaderboardPodiumProps {
 
 const MEDAL = ["🥇", "🥈", "🥉"] as const;
 
-const PODIUM_STYLES = [
-  // 2nd place (left)
+// Display order: 2nd, 1st, 3rd
+const DISPLAY_ORDER = [1, 0, 2];
+
+const PODIUM_CONFIG = [
   {
-    order: "order-first",
-    card: "glass-card rounded-lg p-4 flex flex-col items-center gap-2",
-    shadow: "shadow-[0_0_20px_hsl(220_10%_60%/0.15)]",
-    size: "size-12 text-lg",
+    glow: "shadow-[0_0_24px_rgba(161,161,170,0.15)] border border-white/10",
+    avatarBg: "bg-surface-hover text-text-muted",
+    xpColor: "text-text-dim",
+    cardPad: "py-5 px-4",
+    avatarSize: "h-12 w-12 text-lg",
     nameClass: "text-sm font-semibold",
-    xpClass: "font-mono text-xs text-muted-foreground",
-    height: "py-4",
+    rankLabel: "2nd",
+    rankColor: "text-text-dim",
+    barHeight: "h-16",
+    barBg: "bg-gradient-to-t from-surface-hover/60 to-surface/40",
   },
-  // 1st place (center)
   {
-    order: "order-none",
-    card: "glass-card glow-gold rounded-lg p-5 flex flex-col items-center gap-2",
-    shadow: "",
-    size: "size-16 text-xl",
+    glow: "shadow-[0_0_32px_rgba(251,191,36,0.25)] border border-amber/30",
+    avatarBg: "bg-amber-muted text-amber",
+    xpColor: "text-amber font-semibold",
+    cardPad: "py-7 px-5",
+    avatarSize: "h-16 w-16 text-2xl",
     nameClass: "text-base font-bold",
-    xpClass: "font-mono text-sm text-amber-400",
-    height: "py-6",
+    rankLabel: "1st",
+    rankColor: "text-amber",
+    barHeight: "h-24",
+    barBg: "bg-gradient-to-t from-amber/20 to-amber/5",
   },
-  // 3rd place (right)
   {
-    order: "order-last",
-    card: "glass-card rounded-lg p-4 flex flex-col items-center gap-2",
-    shadow: "shadow-[0_0_20px_hsl(30_60%_40%/0.15)]",
-    size: "size-12 text-lg",
+    glow: "shadow-[0_0_20px_rgba(249,115,22,0.15)] border border-orange/20",
+    avatarBg: "bg-orange-muted text-orange",
+    xpColor: "text-text-dim",
+    cardPad: "py-5 px-4",
+    avatarSize: "h-12 w-12 text-lg",
     nameClass: "text-sm font-semibold",
-    xpClass: "font-mono text-xs text-muted-foreground",
-    height: "py-4",
+    rankLabel: "3rd",
+    rankColor: "text-orange",
+    barHeight: "h-10",
+    barBg: "bg-gradient-to-t from-orange/15 to-orange/5",
   },
 ] as const;
 
-// Display order: 2nd (index 1), 1st (index 0), 3rd (index 2)
-const DISPLAY_ORDER = [1, 0, 2];
-
 export function LeaderboardPodium({ entries }: LeaderboardPodiumProps) {
+  if (entries.length < 3) return null;
+
   return (
-    <div className="flex items-end justify-center gap-3">
+    <motion.div
+      className="flex items-end justify-center gap-3 pb-2"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
       {DISPLAY_ORDER.map((entryIndex) => {
         const entry = entries[entryIndex];
-        const style = PODIUM_STYLES[entryIndex];
+        const config = PODIUM_CONFIG[entryIndex];
+
         return (
-          <div
+          <motion.div
             key={entry.id}
-            className={`flex-1 max-w-[160px] ${style.card} ${style.shadow} ${style.height}`}
+            variants={staggerItem}
+            className={`flex-1 max-w-[200px] bg-surface rounded-xl ${config.glow} ${config.cardPad} flex flex-col items-center gap-2 relative overflow-hidden`}
           >
-            <span className="text-2xl" role="img" aria-label={`Rank ${entryIndex + 1}`}>
-              {MEDAL[entryIndex]}
-            </span>
-            <Avatar className={style.size}>
-              <AvatarFallback className="bg-primary/20 text-primary font-bold">
+            <div
+              className={`absolute bottom-0 left-0 right-0 ${config.barHeight} ${config.barBg} opacity-50`}
+            />
+
+            <div className="relative z-10 flex flex-col items-center gap-2 w-full">
+              <span className="text-2xl" role="img" aria-label={`Rank ${entryIndex + 1}`}>
+                {MEDAL[entryIndex]}
+              </span>
+
+              <div className={`flex items-center justify-center rounded-full font-bold ${config.avatarSize} ${config.avatarBg}`}>
                 {entry.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <p className={`text-center ${style.nameClass} truncate max-w-full`}>
-              {entry.name}
-            </p>
-            <p className={style.xpClass}>{entry.xp.toLocaleString()} XP</p>
-          </div>
+              </div>
+
+              <div className="text-center">
+                <p className={`${config.nameClass} truncate max-w-[140px]`}>
+                  {entry.name}
+                </p>
+                <p className={`font-mono text-xs mt-0.5 ${config.xpColor}`}>
+                  {entry.xp.toLocaleString()} XP
+                </p>
+              </div>
+
+              <span className={`text-xs font-bold uppercase tracking-widest ${config.rankColor}`}>
+                {config.rankLabel}
+              </span>
+            </div>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

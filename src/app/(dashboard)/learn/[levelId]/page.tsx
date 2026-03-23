@@ -8,6 +8,7 @@ import { eq, and } from "drizzle-orm";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { ScenarioCard } from "@/components/trading/scenario-card";
+import { ObjectiveCard } from "@/components/trading/objective-card";
 
 export default async function LevelDetailPage(props: {
   params: Promise<{ levelId: string }>;
@@ -117,20 +118,13 @@ export default async function LevelDetailPage(props: {
         ) : (
           <div className="space-y-3">
             {objectives.map((obj) => (
-              <div
+              <ObjectiveCard
                 key={obj.id}
-                className="flex items-start gap-4 rounded-xl border border-surface-border bg-surface p-4"
-              >
-                <span className="inline-flex items-center rounded-md bg-lavender-muted border border-lavender/20 px-2.5 py-1 text-xs font-mono font-bold text-lavender flex-shrink-0">
-                  {obj.code}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-text">{obj.name}</p>
-                  <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                    {obj.description}
-                  </p>
-                </div>
-              </div>
+                code={obj.code}
+                name={obj.name}
+                description={obj.description}
+                studyGuide={obj.studyGuide}
+              />
             ))}
           </div>
         )}

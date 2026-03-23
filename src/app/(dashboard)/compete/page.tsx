@@ -8,7 +8,7 @@ export default function CompetePage() {
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader
-        title="Compete"
+        title="Arena"
         description="Challenge other traders head-to-head"
         icon={Swords}
       />

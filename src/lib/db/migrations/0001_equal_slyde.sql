@@ -1,0 +1,1 @@
+ALTER TABLE "skill_objectives" ADD COLUMN "study_guide" text;

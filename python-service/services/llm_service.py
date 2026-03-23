@@ -7,7 +7,10 @@ from config import settings
 
 class LLMService:
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key) if settings.openai_api_key else None
+        self.client = AsyncOpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+        ) if settings.openai_api_key else None
 
     async def generate(
         self,

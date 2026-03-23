@@ -1,14 +1,24 @@
 import type { Metadata } from "next";
+import { Sora, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-sora",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "CapMan AI",
-  description: "Gamified Options Trading Education Platform",
+  title: "CapMan AI — Options Trading Education",
+  description:
+    "AI-powered gamified options trading education platform with real-time challenges and MTSS support.",
 };
 
 export default function RootLayout({
@@ -17,10 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("dark", "font-sans", geist.variable)} suppressHydrationWarning>
-      <body className="min-h-screen bg-background font-sans antialiased">
+    <html
+      lang="en"
+      className={`dark ${sora.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body>
         <a href="#main-content" className="skip-nav">
-          Skip to main content
+          Skip to content
         </a>
         <Providers>{children}</Providers>
       </body>

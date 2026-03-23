@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { fadeInUp, scaleIn } from "@/lib/motion";
 import { MessageSquare, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export default function ReviewPage() {
   const [attempt, setAttempt] = useState<any>(null);
@@ -62,11 +63,11 @@ export default function ReviewPage() {
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
-            className="glass-card rounded-xl p-12 text-center"
+            className="bg-surface border border-surface-border rounded-xl p-12 text-center"
           >
-            <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <MessageSquare className="mx-auto mb-4 h-12 w-12 text-text-dim" />
             <p className="text-lg font-medium mb-1">No responses to review right now</p>
-            <p className="text-sm text-muted-foreground">Check back later</p>
+            <p className="text-sm text-text-muted">Check back later</p>
           </motion.div>
         )}
 
@@ -93,27 +94,27 @@ export default function ReviewPage() {
             variants={scaleIn}
             initial="hidden"
             animate="visible"
-            className="glass-card rounded-xl p-12 text-center"
+            className="bg-surface border border-surface-border rounded-xl p-12 text-center"
           >
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
-              <CheckCircle className="mx-auto mb-4 h-14 w-14 text-primary" />
+              <CheckCircle className="mx-auto mb-4 h-14 w-14 text-green" />
             </motion.div>
-            <p className="text-2xl font-bold text-gradient-primary mb-2">Well done!</p>
-            <p className="text-sm text-muted-foreground mb-4">Your peer review has been submitted.</p>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-400 glow-gold">
+            <p className="text-2xl font-bold text-gradient-streak mb-2">Well done!</p>
+            <p className="text-sm text-text-muted mb-4">Your peer review has been submitted.</p>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-muted px-4 py-1.5 text-sm font-semibold text-amber">
               +5 XP
             </span>
             <div className="mt-6">
-              <button
+              <Button
+                variant="link"
                 onClick={() => { setSubmitted(false); loadAttempt(); }}
-                className="inline-link text-sm text-primary hover:underline"
               >
                 Review another response
-              </button>
+              </Button>
             </div>
           </motion.div>
         )}

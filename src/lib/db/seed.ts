@@ -16,18 +16,289 @@ const CURRICULUM_LEVELS = [
 ];
 
 const SKILL_OBJECTIVES = [
-  { code: "OBJ-001", name: "Identify option moneyness", description: "Identify option moneyness (ITM/ATM/OTM)", levelNumber: 1 },
-  { code: "OBJ-002", name: "Calculate intrinsic and extrinsic value", description: "Calculate option intrinsic and extrinsic value", levelNumber: 1 },
-  { code: "OBJ-003", name: "Interpret delta for directional risk", description: "Interpret delta for directional risk", levelNumber: 2 },
-  { code: "OBJ-004", name: "Interpret theta for time decay impact", description: "Interpret theta for time decay impact", levelNumber: 2 },
-  { code: "OBJ-005", name: "Interpret vega for volatility sensitivity", description: "Interpret vega for volatility sensitivity", levelNumber: 2 },
-  { code: "OBJ-006", name: "Identify correct strategy for market regime", description: "Identify correct strategy for market regime", levelNumber: 5 },
-  { code: "OBJ-007", name: "Calculate max profit/loss for vertical spreads", description: "Calculate max profit/loss for vertical spreads", levelNumber: 4 },
-  { code: "OBJ-008", name: "Calculate breakeven for a given strategy", description: "Calculate breakeven for a given strategy", levelNumber: 4 },
-  { code: "OBJ-009", name: "Articulate risk management rationale", description: "Articulate risk management rationale", levelNumber: 8 },
-  { code: "OBJ-010", name: "Construct multi-leg trade thesis", description: "Construct multi-leg trade thesis", levelNumber: 7 },
-  { code: "OBJ-011", name: "Identify adjustment triggers", description: "Identify adjustment triggers (stop loss, roll conditions)", levelNumber: 8 },
-  { code: "OBJ-012", name: "Evaluate portfolio-level Greek exposure", description: "Evaluate portfolio-level Greek exposure", levelNumber: 9 },
+  {
+    code: "OBJ-001", name: "Identify option moneyness", description: "Identify option moneyness (ITM/ATM/OTM)", levelNumber: 1,
+    studyGuide: `Option moneyness describes the relationship between an option's strike price and the current price of the underlying asset. There are three states:
+
+In-The-Money (ITM): The option has intrinsic value. For calls, the stock price is above the strike (e.g., $185 stock, $170 strike call). For puts, the stock price is below the strike (e.g., $185 stock, $200 strike put). ITM options have deltas closer to 1.0 (calls) or -1.0 (puts).
+
+At-The-Money (ATM): The strike price is approximately equal to the stock price. ATM options have deltas near 0.50 (calls) or -0.50 (puts). They have the highest time value and are the most sensitive to volatility changes.
+
+Out-of-The-Money (OTM): The option has no intrinsic value. For calls, the stock is below the strike. For puts, the stock is above the strike. OTM options have deltas closer to 0 and are cheaper because they require a larger move to become profitable.
+
+Quick tip: Delta is a fast proxy for moneyness. A call with 0.90 delta is deep ITM; one with 0.10 delta is far OTM.`,
+  },
+  {
+    code: "OBJ-002", name: "Calculate intrinsic and extrinsic value", description: "Calculate option intrinsic and extrinsic value", levelNumber: 1,
+    studyGuide: `Every option's price is composed of two parts: intrinsic value and extrinsic (time) value.
+
+Intrinsic Value is the "real" value — what the option would be worth if exercised immediately.
+- Call intrinsic = max(0, Stock Price - Strike Price)
+- Put intrinsic = max(0, Strike Price - Stock Price)
+- Intrinsic value can never be negative. An OTM option has zero intrinsic value.
+
+Example: Stock at $420, $400 call priced at $28. Intrinsic = $420 - $400 = $20.
+
+Extrinsic (Time) Value is the premium above intrinsic value. It represents the market's pricing of time remaining, volatility, and the probability of further favorable movement.
+- Extrinsic = Option Price - Intrinsic Value
+- Using the example above: $28 - $20 = $8 of time value.
+
+Key behaviors:
+- ATM options have the highest extrinsic value because uncertainty about finishing ITM or OTM is greatest.
+- Extrinsic value decays over time (theta decay) and accelerates as expiration approaches.
+- Higher implied volatility increases extrinsic value; lower IV decreases it.
+- At expiration, extrinsic value is always zero — only intrinsic value remains.`,
+  },
+  {
+    code: "OBJ-003", name: "Interpret delta for directional risk", description: "Interpret delta for directional risk", levelNumber: 2,
+    studyGuide: `Delta measures how much an option's price changes for a $1 move in the underlying stock. It serves three purposes:
+
+1. Rate of Change: A call with 0.60 delta gains approximately $0.60 when the stock rises $1, and loses $0.60 when it falls $1.
+
+2. Directional Exposure (Equivalent Shares): Delta tells you the equivalent stock position. Owning 10 contracts (1,000 shares notional) of a 0.60 delta call gives you 600 equivalent shares of directional exposure. This is called "delta-equivalent shares."
+
+3. Probability Proxy: Delta roughly approximates the probability the option finishes ITM at expiration. A 0.30 delta call has roughly a 30% chance of finishing ITM.
+
+Delta ranges:
+- Calls: 0 to +1.0 (deep OTM near 0, deep ITM near 1.0, ATM near 0.50)
+- Puts: -1.0 to 0 (deep ITM near -1.0, deep OTM near 0, ATM near -0.50)
+
+Net delta for a multi-leg position is the sum of all individual deltas (accounting for long/short and contract count). A position with net delta of +350 behaves like owning 350 shares of stock.
+
+Delta is not constant — it changes as the stock moves (this rate of change is called gamma).`,
+  },
+  {
+    code: "OBJ-004", name: "Interpret theta for time decay impact", description: "Interpret theta for time decay impact", levelNumber: 2,
+    studyGuide: `Theta measures the daily time decay of an option's price — how much value the option loses each day, all else equal.
+
+Key concepts:
+- Theta is almost always negative for long option positions (you lose money each day).
+- Theta is positive for short option positions (you earn money each day from decay).
+- Expressed as dollars per day: a theta of -0.05 means the option loses $0.05 per day per share ($5 per contract).
+
+Theta acceleration: Time decay is not linear — it accelerates as expiration approaches.
+- At 60 DTE, an ATM option might lose $0.03/day.
+- At 30 DTE, that increases to $0.05/day.
+- At 7 DTE, it might be $0.12/day.
+- A rough rule: options lose about 1/3 of their time value in the first half of their life and 2/3 in the second half.
+
+ATM vs ITM/OTM: ATM options have the highest theta because they have the most extrinsic value to decay. Deep ITM options (mostly intrinsic value) and deep OTM options (little total value) have lower theta.
+
+Practical implications:
+- If you're long options, time works against you — consider how much theta you're paying daily.
+- If you're short options, theta is your friend — the 30-45 DTE entry is popular because theta starts accelerating.
+- Weekends count: theta accrues over weekends even though markets are closed.`,
+  },
+  {
+    code: "OBJ-005", name: "Interpret vega for volatility sensitivity", description: "Interpret vega for volatility sensitivity", levelNumber: 2,
+    studyGuide: `Vega measures how much an option's price changes for a 1 percentage point change in implied volatility (IV).
+
+Key concepts:
+- A vega of 0.15 means the option gains $0.15 per share ($15 per contract) if IV increases by 1%.
+- Long options have positive vega — they benefit from rising IV.
+- Short options have negative vega — they benefit from falling IV.
+
+ATM options have the highest vega because they have the most extrinsic value, which is most sensitive to volatility changes. Deep ITM and deep OTM options have lower vega.
+
+Longer-dated options have higher vega than shorter-dated ones — a 90 DTE ATM option is much more sensitive to IV changes than a 7 DTE ATM option.
+
+IV Crush: After known events (earnings, FDA decisions), implied volatility often drops sharply as uncertainty resolves. This is called "vol crush." If you're long options through an event, even if the stock moves in your favor, the IV crush can cause your position to lose money.
+
+Example: You buy a call at 45% IV for $5.00 with vega of 0.20. Earnings happen, IV drops to 25% (a 20-point drop). The vega impact alone is: 20 x $0.20 = $4.00 loss. The stock would need to move significantly in your favor to overcome this.
+
+Practical tip: Compare a stock's IV to its IV Rank (where current IV sits relative to its historical range). High IV rank means options are expensive; low IV rank means they're cheap relative to history.`,
+  },
+  {
+    code: "OBJ-006", name: "Identify correct strategy for market regime", description: "Identify correct strategy for market regime", levelNumber: 5,
+    studyGuide: `Different market environments favor different options strategies. Identifying the current regime is the first step in strategy selection.
+
+Bull Quiet (uptrend, VIX < 20): Steady upward movement with low volatility.
+- Preferred: Bull call spreads, covered calls, cash-secured puts
+- Rationale: Low premium makes selling less attractive; directional plays benefit from the trend
+
+Bull Volatile (uptrend, VIX > 20, choppy): Rising but with large swings.
+- Preferred: Ratio spreads, calendar spreads, protective puts on existing longs
+- Rationale: Elevated premium makes selling attractive; need protection against sharp reversals
+
+Bear Quiet (downtrend, VIX < 20): Steady decline without panic.
+- Preferred: Bear put spreads, collars on longs, long puts
+- Rationale: Relatively cheap protection; controlled downside plays
+
+Bear Volatile (downtrend, VIX > 20, fast decline): Sharp selloff with fear.
+- Preferred: Long puts, put spreads, straddles/strangles
+- Rationale: High premium reflects real risk; protective strategies are critical
+
+Sideways/Range-Bound (mean-reverting, defined range): Price oscillates in a range.
+- Preferred: Iron condors, iron butterflies, short strangles, calendar spreads
+- Rationale: Collect premium from time decay; profit from prices staying within a range
+
+Regime identification tools: Look at price trend (moving averages), VIX level (above/below 20), IV rank for the specific stock, and recent price action (trending vs choppy vs rangebound).`,
+  },
+  {
+    code: "OBJ-007", name: "Calculate max profit/loss for vertical spreads", description: "Calculate max profit/loss for vertical spreads", levelNumber: 4,
+    studyGuide: `Vertical spreads involve buying and selling options at different strikes but the same expiration. There are four types:
+
+Bull Call Spread (debit): Buy lower strike call, sell higher strike call.
+- Max Profit = Width of strikes - Net debit paid
+- Max Loss = Net debit paid
+- Example: Buy $100 call for $5, sell $105 call for $2. Debit = $3. Max profit = $5 - $3 = $2. Max loss = $3.
+
+Bear Put Spread (debit): Buy higher strike put, sell lower strike put.
+- Max Profit = Width of strikes - Net debit paid
+- Max Loss = Net debit paid
+- Example: Buy $100 put for $4, sell $95 put for $1.50. Debit = $2.50. Max profit = $5 - $2.50 = $2.50. Max loss = $2.50.
+
+Bull Put Spread (credit): Sell higher strike put, buy lower strike put.
+- Max Profit = Net credit received
+- Max Loss = Width of strikes - Net credit received
+- Example: Sell $100 put for $4, buy $95 put for $1.50. Credit = $2.50. Max profit = $2.50. Max loss = $5 - $2.50 = $2.50.
+
+Bear Call Spread (credit): Sell lower strike call, buy higher strike call.
+- Max Profit = Net credit received
+- Max Loss = Width of strikes - Net credit received
+
+Key relationship: In any vertical spread, Max Profit + Max Loss = Width of Strikes. This is always true and serves as a quick check on your calculations.`,
+  },
+  {
+    code: "OBJ-008", name: "Calculate breakeven for a given strategy", description: "Calculate breakeven for a given strategy", levelNumber: 4,
+    studyGuide: `The breakeven point is the stock price at expiration where the position neither makes nor loses money (excluding commissions).
+
+Single-Leg Strategies:
+- Long Call: Breakeven = Strike + Premium paid
+- Long Put: Breakeven = Strike - Premium paid
+- Short Call: Breakeven = Strike + Premium received
+- Short Put: Breakeven = Strike - Premium received
+
+Vertical Spreads:
+- Bull Call Spread: Breakeven = Lower strike + Net debit
+- Bear Put Spread: Breakeven = Higher strike - Net debit
+- Bull Put Spread: Breakeven = Higher strike - Net credit
+- Bear Call Spread: Breakeven = Lower strike + Net credit
+
+Straddles (long call + long put at same strike):
+- Upper breakeven = Strike + Total premium paid
+- Lower breakeven = Strike - Total premium paid
+
+Strangles (long call + long put at different strikes):
+- Upper breakeven = Call strike + Total premium paid
+- Lower breakeven = Put strike - Total premium paid
+
+Iron Condors (short strangle + long strangle protection):
+- Upper breakeven = Short call strike + Net credit
+- Lower breakeven = Short put strike - Net credit
+
+Practical tip: Breakeven at expiration is different from breakeven during the trade. An option position can be profitable before expiration even if the stock hasn't reached the expiration breakeven, thanks to remaining time value.`,
+  },
+  {
+    code: "OBJ-009", name: "Articulate risk management rationale", description: "Articulate risk management rationale", levelNumber: 8,
+    studyGuide: `Risk management in options trading is about protecting capital while maintaining exposure to your thesis. It encompasses position sizing, exit rules, and portfolio-level controls.
+
+Position Sizing:
+- Risk a fixed percentage of portfolio per trade (commonly 1-3% of account value).
+- For defined-risk trades (spreads), max loss IS your risk. Size so max loss = your risk budget.
+- For undefined-risk trades (naked options), use a stop-loss level to define risk.
+
+Stop-Loss Rules:
+- Percentage of premium: Exit when you've lost 50-100% of premium paid (for long options) or 2x credit received (for short options).
+- Technical stops: Exit if the underlying breaks a key support/resistance level that invalidates your thesis.
+- Time stops: Close positions at a predetermined date if the thesis hasn't played out (e.g., close at 21 DTE regardless).
+
+Rolling:
+- Rolling is closing the current position and opening a new one, typically at a later expiration or different strike.
+- Roll for credit when possible — this reduces your cost basis.
+- Common rolls: roll short options out in time when tested, roll up/down to adjust strike.
+
+Portfolio-Level Controls:
+- Limit total portfolio delta exposure to avoid excessive directional risk.
+- Monitor total portfolio theta — how much are you paying or collecting daily?
+- Diversify across underlyings, expirations, and strategy types.
+- Set a maximum portfolio-wide drawdown threshold (e.g., reduce position sizes after 10% drawdown).
+
+The key principle: Define your risk before entering the trade, not after.`,
+  },
+  {
+    code: "OBJ-010", name: "Construct multi-leg trade thesis", description: "Construct multi-leg trade thesis", levelNumber: 7,
+    studyGuide: `A multi-leg trade thesis combines two or more options to express a nuanced market view. The thesis should articulate: what you expect to happen, why, and how the trade structure profits from that outcome.
+
+Building a thesis framework:
+1. Directional View: Where do you think the stock is going? (up, down, sideways, uncertain)
+2. Magnitude: How far? (a little, a lot, within a range)
+3. Timing: By when? (this week, in 30 days, over the next quarter)
+4. Volatility View: Do you expect IV to rise, fall, or stay the same?
+
+Matching structure to thesis:
+- "Stock will rise moderately in 30 days, IV will stay flat" → Bull call spread
+- "Stock will stay in a range, IV will decline after earnings" → Iron condor or short strangle
+- "Stock will make a big move but I don't know direction" → Long straddle or strangle
+- "Stock will rise but I want to reduce cost" → Call ratio spread or collar
+- "Stock will decline sharply soon, IV is cheap" → Long puts or bear put spread
+
+Trade plan components:
+- Entry criteria: What triggers the trade? (technical level, event, IV rank threshold)
+- Position sizing: How many contracts, what percentage of portfolio at risk?
+- Profit target: At what gain do you take profits? (50% of max profit is a common target for credit spreads)
+- Stop-loss: At what point do you exit for a loss?
+- Adjustment plan: What do you do if the stock moves against you? (roll, add a leg, close half)
+- Time-based exit: When do you close regardless of P/L? (e.g., 21 DTE for short premium)`,
+  },
+  {
+    code: "OBJ-011", name: "Identify adjustment triggers", description: "Identify adjustment triggers (stop loss, roll conditions)", levelNumber: 8,
+    studyGuide: `Adjustment triggers are predefined conditions that tell you when to modify, roll, or close a position. Setting these before entering a trade removes emotion from decision-making.
+
+Price-Based Triggers:
+- Short option tested: When the underlying moves through your short strike, consider rolling or closing. For a short put at $100, a trigger might be "if stock drops below $101, roll down and out."
+- Breach of key support/resistance: If a technical level that formed your thesis breaks, the thesis may be invalidated.
+- Percentage move: Exit or adjust if the stock moves more than X% against you.
+
+Greeks-Based Triggers:
+- Delta threshold: If your position delta exceeds a comfort level (e.g., a neutral trade reaches +/- 30 delta), rebalance.
+- Gamma risk near expiration: High gamma near expiration means large, unpredictable P/L swings. Close or roll positions before the last week.
+
+Time-Based Triggers:
+- 21 DTE rule: Many traders close or roll short premium positions at 21 DTE to avoid the worst gamma risk zone while capturing most theta decay.
+- 50% of max profit: Close credit spreads at 50% of max profit to lock in gains — the remaining 50% takes disproportionately longer to capture.
+
+Loss-Based Triggers:
+- 2x credit received: For credit spreads, close if losses reach 2x the credit received.
+- Fixed dollar amount: Set a maximum dollar loss per position.
+
+Rolling mechanics:
+- Roll out (same strike, later expiration): Buys more time, usually for a credit.
+- Roll out and away (different strike, later expiration): Adjusts the position while extending time.
+- Roll up/down: Move strikes closer to the current stock price to collect more premium.
+- Only roll if the original thesis is still intact — rolling a bad trade just delays the loss.`,
+  },
+  {
+    code: "OBJ-012", name: "Evaluate portfolio-level Greek exposure", description: "Evaluate portfolio-level Greek exposure", levelNumber: 9,
+    studyGuide: `Portfolio-level Greek analysis looks at the aggregate risk across all your positions, not just individual trades. This is how professional traders manage risk.
+
+Portfolio Delta: Sum of all position deltas (adjusted for contract count and long/short).
+- Measures overall directional exposure in equivalent shares.
+- Example: Long 10 contracts of 0.50 delta calls (+500), short 5 contracts of -0.30 delta puts (+150). Net portfolio delta = +650 equivalent shares.
+- A delta-neutral portfolio has net delta near zero — it doesn't benefit or suffer from small stock moves.
+
+Portfolio Gamma: Sum of all position gammas.
+- Measures how quickly your portfolio delta changes as the underlying moves.
+- Long gamma (positive): Your delta moves in your favor as the stock moves (long options).
+- Short gamma (negative): Your delta moves against you as the stock moves (short options). This is the most dangerous Greek exposure.
+
+Portfolio Theta: Sum of all position thetas.
+- Tells you how much your entire portfolio gains or loses per day from time decay.
+- Positive theta = you earn from decay (net short premium). Negative theta = you pay for decay (net long premium).
+- Most professional traders target a specific daily theta relative to portfolio size.
+
+Portfolio Vega: Sum of all position vegas.
+- Measures exposure to volatility changes across the portfolio.
+- Positive vega = portfolio benefits from rising IV. Negative vega = benefits from falling IV.
+- Diversifying expirations and underlyings helps manage aggregate vega exposure.
+
+Hedging:
+- Too much delta? Buy/sell shares or add opposing options to neutralize.
+- Too much gamma risk? Reduce position sizes or add offsetting positions.
+- Too much vega? Spread across expirations or add positions with opposing vega.
+
+The goal is not to eliminate all Greeks but to keep each within a range that matches your risk tolerance and market outlook.`,
+  },
 ];
 
 // ─── Seed Scenarios (2 per level for levels 1-3) ────────
@@ -242,7 +513,7 @@ export async function seed() {
         description: level.description,
         prerequisiteLevel: level.levelNumber > 1 ? level.levelNumber - 1 : null,
         masteryThreshold: 80,
-        minAttemptsRequired: 10,
+        minAttemptsRequired: 1,
       });
     }
   }
@@ -260,15 +531,22 @@ export async function seed() {
       .where(eq(skillObjectives.code, obj.code))
       .limit(1);
 
+    const levelId = levelMap.get(obj.levelNumber);
+    if (!levelId) throw new Error(`Level ${obj.levelNumber} not found for ${obj.code}`);
+
     if (existing.length === 0) {
-      const levelId = levelMap.get(obj.levelNumber);
-      if (!levelId) throw new Error(`Level ${obj.levelNumber} not found for ${obj.code}`);
       await db.insert(skillObjectives).values({
         code: obj.code,
         name: obj.name,
         description: obj.description,
+        studyGuide: obj.studyGuide,
         curriculumLevelId: levelId,
       });
+    } else if (obj.studyGuide && !existing[0].studyGuide) {
+      await db
+        .update(skillObjectives)
+        .set({ studyGuide: obj.studyGuide, updatedAt: new Date() })
+        .where(eq(skillObjectives.code, obj.code));
     }
   }
 

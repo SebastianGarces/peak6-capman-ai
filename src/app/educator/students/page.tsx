@@ -1,10 +1,5 @@
-import { PageHeader } from "@/components/layout/page-header";
+import { redirect } from "next/navigation";
 
 export default function StudentsPage() {
-  return (
-    <div>
-      <PageHeader title="Students" description="View all learners" />
-      <p className="text-muted-foreground">Click a learner in the heatmap to view their details.</p>
-    </div>
-  );
+  redirect("/educator");
 }

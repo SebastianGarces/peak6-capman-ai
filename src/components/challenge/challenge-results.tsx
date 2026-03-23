@@ -31,53 +31,53 @@ export function ChallengeResults({
     <motion.div
       variants={staggerContainer}
       initial="hidden"
-      animate="visible"
+      animate="show"
       className="mx-auto max-w-lg space-y-6"
     >
       {/* Win/Lose banner */}
       <motion.div
         variants={scaleIn}
-        className={`glass-card rounded-xl p-8 text-center relative overflow-hidden ${
+        className={`bg-surface border border-surface-border rounded-xl p-8 text-center relative overflow-hidden ${
           isWinner
-            ? "glow-gold bg-gradient-to-br from-amber-500/10 to-yellow-500/5"
+            ? "bg-gradient-to-br from-amber-500/10 to-yellow-500/5"
             : ""
         }`}
       >
         <XpPopup amount={xpAwarded} show={true} />
         <Trophy
-          className={`mx-auto mb-3 h-14 w-14 ${isWinner ? "text-amber-400" : "text-muted-foreground"}`}
+          className={`mx-auto mb-3 h-14 w-14 ${isWinner ? "text-amber-400" : "text-text-muted"}`}
         />
         <h2
           className={`text-4xl font-bold ${
-            isWinner ? "text-gradient-primary" : "text-muted-foreground"
+            isWinner ? "text-gradient-primary" : "text-text-muted"
           }`}
         >
           {isWinner ? "Victory!" : "Good Effort"}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-text-muted">
           {isWinner ? "Outstanding trading analysis!" : "Keep practicing — you'll get there!"}
         </p>
       </motion.div>
 
       {/* Score comparison */}
-      <motion.div variants={staggerItem} className="glass-card rounded-xl p-6">
+      <motion.div variants={staggerItem} className="bg-surface border border-surface-border rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div className="text-center flex-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Your Score</p>
-            <p className={`font-mono text-5xl font-bold ${isWinner ? "text-primary" : "text-foreground"}`}>
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Your Score</p>
+            <p className={`font-mono text-5xl font-bold ${isWinner ? "text-primary" : "text-text"}`}>
               {yourScore}
             </p>
           </div>
-          <div className="text-2xl font-bold text-muted-foreground px-4">vs</div>
+          <div className="text-2xl font-bold text-text-muted px-4">vs</div>
           <div className="text-center flex-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Opponent</p>
-            <p className={`font-mono text-5xl font-bold ${!isWinner ? "text-primary" : "text-foreground"}`}>
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-1">Opponent</p>
+            <p className={`font-mono text-5xl font-bold ${!isWinner ? "text-primary" : "text-text"}`}>
               {opponentScore}
             </p>
           </div>
         </div>
         <div className="mt-4 text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-400 glow-gold">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-400">
             +{xpAwarded} XP earned
           </span>
         </div>
@@ -85,21 +85,21 @@ export function ChallengeResults({
 
       {/* Opponent response reveal */}
       {opponentResponse && (
-        <motion.div variants={staggerItem} className="glass-card rounded-xl overflow-hidden">
+        <motion.div variants={staggerItem} className="bg-surface border border-surface-border rounded-xl overflow-hidden">
           <button
             onClick={() => setShowOpponent(!showOpponent)}
             className="inline-link w-full flex items-center justify-between p-4 text-sm font-medium hover:bg-muted/30 transition-colors"
           >
             <span>View Opponent&apos;s Response</span>
             {showOpponent ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              <ChevronUp className="h-4 w-4 text-text-muted" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 text-text-muted" />
             )}
           </button>
           {showOpponent && (
-            <div className="border-t border-border p-4">
-              <p className="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
+            <div className="border-t border-surface-border p-4">
+              <p className="whitespace-pre-wrap text-sm text-text-muted leading-relaxed">
                 {opponentResponse}
               </p>
             </div>
@@ -110,10 +110,10 @@ export function ChallengeResults({
       {/* Action buttons */}
       <motion.div variants={staggerItem} className="flex gap-3 justify-center">
         <Link href="/compete">
-          <Button className="gradient-primary-btn text-white border-0">Rematch</Button>
+          <Button className="bg-primary text-white border-0">Rematch</Button>
         </Link>
         <Link href="/review">
-          <Button variant="outline">Review Responses</Button>
+          <Button variant="secondary">Review Responses</Button>
         </Link>
         <Link href="/compete">
           <Button variant="ghost">Back to Lobby</Button>

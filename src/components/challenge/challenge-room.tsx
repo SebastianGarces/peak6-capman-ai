@@ -7,22 +7,25 @@ import { ChallengeResults } from "./challenge-results";
 import { useSocket } from "@/components/providers/socket-provider";
 import { motion, AnimatePresence } from "motion/react";
 import { fadeInUp } from "@/lib/motion";
-import { CheckCircle, User } from "lucide-react";
+import { CheckCircle, User, Clock, FileText } from "lucide-react";
 
 type OpponentStatus = "writing" | "submitted" | "waiting" | "disconnected";
 
 interface ChallengeRoomProps {
   challengeId: string;
+  initialScenario?: any;
+  userId?: string;
 }
 
-export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
-  const [scenario, setScenario] = useState<any>(null);
+export function ChallengeRoom({ challengeId, initialScenario, userId }: ChallengeRoomProps) {
+  const [scenario, setScenario] = useState<any>(initialScenario ?? null);
   const [response, setResponse] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [opponentStatus, setOpponentStatus] = useState<OpponentStatus>("writing");
   const [results, setResults] = useState<any>(null);
   const { challengeSocket } = useSocket();
 
+  // Set up socket listeners — stable effect, no dependency on `submitted`
   useEffect(() => {
     if (!challengeSocket) return;
 
@@ -35,12 +38,19 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
     });
 
     challengeSocket.on("challenge:results", (data: any) => {
+      console.log("Received challenge:results", data);
       setResults(data);
     });
 
     challengeSocket.on("challenge:timeout", () => {
-      if (!submitted) handleSubmit();
+      // timeout handling done via timer component
     });
+
+    // Ensure auth is current and request scenario
+    if (userId) {
+      challengeSocket.emit("auth", { userId });
+    }
+    challengeSocket.emit("challenge:get_scenario", { challengeId });
 
     return () => {
       challengeSocket.off("challenge:start");
@@ -48,14 +58,15 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
       challengeSocket.off("challenge:results");
       challengeSocket.off("challenge:timeout");
     };
-  }, [challengeSocket, submitted]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challengeSocket]);
 
   const handleSubmit = useCallback(() => {
     if (submitted) return;
     setSubmitted(true);
     setOpponentStatus("waiting");
-    challengeSocket?.emit("challenge:submit", { challengeId, response });
-  }, [challengeSocket, challengeId, response, submitted]);
+    challengeSocket?.emit("challenge:submit", { challengeId, response, userId });
+  }, [challengeSocket, challengeId, response, submitted, userId]);
 
   if (results) {
     return (
@@ -76,8 +87,8 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
       : opponentStatus === "submitted"
         ? "bg-blue-500"
         : opponentStatus === "disconnected"
-          ? "bg-muted-foreground"
-          : "bg-amber-500";
+          ? "bg-text-muted"
+          : "bg-amber-500 animate-pulse";
 
   const opponentLabel =
     opponentStatus === "writing"
@@ -96,13 +107,22 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
       className="space-y-4"
     >
       {/* Header row: timer + opponent status */}
-      <div className="glass-card rounded-xl px-5 py-3 flex items-center justify-between">
-        <ChallengeTimer duration={300} onExpire={handleSubmit} />
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <User className="h-4 w-4" />
-          <span>Opponent:</span>
+      <div className="bg-surface border border-surface-border rounded-xl px-5 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Clock className="h-4 w-4 text-text-muted" />
+          <ChallengeTimer duration={300} onExpire={handleSubmit} />
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <User className="h-4 w-4 text-text-muted" />
+          <span className="text-text-muted hidden sm:inline">Opponent:</span>
           <span className={`h-2 w-2 rounded-full ${opponentDotColor}`} />
-          <span className={opponentStatus === "submitted" ? "text-blue-400" : "text-muted-foreground"}>
+          <span
+            className={
+              opponentStatus === "submitted"
+                ? "text-blue-400 font-medium"
+                : "text-text-muted"
+            }
+          >
             {opponentLabel}
           </span>
           {opponentStatus === "submitted" && (
@@ -111,51 +131,88 @@ export function ChallengeRoom({ challengeId }: ChallengeRoomProps) {
         </div>
       </div>
 
-      {/* Split-pane: scenario + response */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Split-pane: scenario (left) + response (right) */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
         {/* Scenario panel */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {scenario ? (
             <motion.div
-              key="scenario"
+              key="scenario-content"
               variants={fadeInUp}
               initial="hidden"
               animate="visible"
-              className="glass-card rounded-xl p-5"
+              className="bg-surface border border-surface-border rounded-xl p-5 space-y-3"
             >
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Scenario</p>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{scenario.scenario_text}</p>
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                  Scenario
+                </p>
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
+                {scenario.scenario_text}
+              </p>
               {scenario.question_prompt && (
-                <p className="mt-3 text-sm font-medium text-primary">{scenario.question_prompt}</p>
+                <div className="mt-3 rounded-lg border border-primary/20 bg-primary-muted p-3">
+                  <p className="text-sm font-medium text-primary">
+                    {scenario.question_prompt}
+                  </p>
+                </div>
               )}
             </motion.div>
           ) : (
-            <div className="glass-card rounded-xl p-5 text-center text-sm text-muted-foreground">
-              Waiting for scenario...
-            </div>
+            <motion.div
+              key="scenario-loading"
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              className="bg-surface border border-surface-border rounded-xl p-8 text-center space-y-3"
+            >
+              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-full bg-primary/10 animate-pulse">
+                <FileText className="h-6 w-6 text-primary/60" />
+              </div>
+              <p className="text-sm text-text-muted">Loading scenario...</p>
+            </motion.div>
           )}
         </AnimatePresence>
 
         {/* Response area */}
-        <div className="glass-card rounded-xl p-5 space-y-3 flex flex-col">
+        <div className="bg-surface border border-surface-border rounded-xl p-5 space-y-3 flex flex-col">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Your Response</p>
-            <span className="text-xs text-muted-foreground">{response.length} chars</span>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+              Your Response
+            </p>
+            <span
+              className={`text-xs tabular-nums ${
+                response.length > 800
+                  ? "text-amber-400"
+                  : "text-text-muted"
+              }`}
+            >
+              {response.length} chars
+            </span>
           </div>
           <textarea
-            className="flex-1 w-full min-h-[200px] rounded-lg border border-border bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-            rows={8}
+            className="flex-1 w-full min-h-[220px] rounded-lg border border-surface-border bg-background p-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none font-sans transition-colors"
+            rows={9}
             value={response}
             onChange={(e) => setResponse(e.target.value)}
             disabled={submitted}
-            placeholder="Write your analysis and trading decision..."
+            placeholder="Write your analysis and trading decision here..."
           />
           <Button
             onClick={handleSubmit}
             disabled={submitted || !response.trim()}
-            className={submitted ? "" : "gradient-primary-btn text-white border-0"}
+            className={`w-full ${submitted ? "" : "bg-primary text-white border-0"}`}
           >
-            {submitted ? "Submitted — waiting for results" : "Submit Response"}
+            {submitted ? (
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-400" />
+                Submitted — awaiting results
+              </span>
+            ) : (
+              "Submit Response"
+            )}
           </Button>
         </div>
       </div>

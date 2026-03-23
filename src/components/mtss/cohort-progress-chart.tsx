@@ -1,56 +1,34 @@
-"use client";
+import { TrendingUp } from "lucide-react";
 
-export function CohortProgressChart({ data }: { data?: any[] }) {
-  const maxValue = data && data.length > 0 ? Math.max(...data.map((d) => d.mastery ?? 0), 1) : 100;
-
+export function CohortProgressChart() {
   return (
-    <div className="glass-card rounded-xl p-4">
-      <h3 className="mb-4 text-sm font-medium text-foreground">Cohort Progress</h3>
-      {(!data || data.length === 0) ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">No data available yet</p>
-      ) : (
-        <div className="flex gap-4">
-          {/* Left axis */}
-          <div className="flex flex-col justify-between py-1 text-right">
-            {[100, 75, 50, 25, 0].map((tick) => (
-              <span key={tick} className="font-mono text-xs text-muted-foreground">{tick}%</span>
-            ))}
-          </div>
-          {/* Bars */}
-          <div className="relative flex-1">
-            {/* Grid lines */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-px w-full bg-border/40" />
-              ))}
-            </div>
-            <div className="relative h-48 flex items-end gap-1">
-              {data.map((d, i) => {
-                const heightPct = ((d.mastery ?? 0) / 100) * 100;
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="font-mono text-xs text-muted-foreground">{d.mastery ?? 0}%</span>
-                    <div
-                      className="w-full bg-primary rounded-t-md transition-all"
-                      style={{ height: `${heightPct}%` }}
-                      title={`Level ${d.level}: ${d.mastery}%`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+    <div className="rounded-xl bg-surface border border-surface-border p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-muted">
+          <TrendingUp className="h-4.5 w-4.5 text-amber" />
         </div>
-      )}
-      {data && data.length > 0 && (
-        <div className="mt-2 flex gap-1 pl-10">
-          {data.map((d, i) => (
-            <div key={i} className="flex-1 text-center">
-              <span className="text-xs text-muted-foreground truncate block">Lv{d.level}</span>
-            </div>
-          ))}
+        <div>
+          <h3 className="font-semibold text-text text-sm">Cohort Progress</h3>
+          <p className="text-xs text-text-muted">Weekly tier movement</p>
         </div>
-      )}
+      </div>
+
+      {/* Placeholder chart area */}
+      <div className="flex h-48 items-end gap-2 pt-4">
+        {[40, 55, 48, 62, 58, 70, 65, 72, 68, 80, 75, 82].map((height, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1">
+            <div
+              className="w-full rounded-t-sm bg-gradient-to-t from-amber to-amber/40 opacity-80 transition-all duration-500"
+              style={{ height: `${height}%` }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-between text-xs text-text-dim">
+        <span>12 weeks ago</span>
+        <span className="text-amber font-semibold">Coming soon — real chart integration</span>
+        <span>This week</span>
+      </div>
     </div>
   );
 }

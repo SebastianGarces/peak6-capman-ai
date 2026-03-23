@@ -1,32 +1,27 @@
 "use client";
 
-import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 
 export default function EducatorError({
   error,
-  unstable_retry,
+  reset,
 }: {
   error: Error & { digest?: string };
-  unstable_retry: () => void;
+  reset: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
-    <div className="flex flex-col items-center justify-center py-16">
-      <div className="glass-card rounded-xl p-8 text-center max-w-md glow-danger">
-        <h2 className="text-lg font-semibold text-destructive">Something went wrong</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          An unexpected error occurred in the educator dashboard. Please try again.
-        </p>
-        <button
-          onClick={unstable_retry}
-          className="mt-6 rounded-lg gradient-primary-btn px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          Try Again
-        </button>
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-muted">
+        <AlertTriangle className="h-7 w-7 text-red" />
       </div>
+      <h2 className="text-xl font-bold">Educator dashboard error</h2>
+      <p className="mt-2 max-w-sm text-sm text-text-muted">
+        {error.message || "Failed to load educator data."}
+      </p>
+      <Button onClick={reset} className="mt-6" variant="secondary">
+        Try again
+      </Button>
     </div>
   );
 }

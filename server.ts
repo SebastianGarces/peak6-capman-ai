@@ -261,6 +261,41 @@ app.prepare().then(() => {
       }
     );
 
+    // Fetch scenario for a challenge (in case client missed challenge:start)
+    socket.on(
+      "challenge:get_scenario",
+      async (data: { challengeId: string }) => {
+        if (!data?.challengeId) return;
+        try {
+          const [challenge] = await db
+            .select({ scenarioId: challenges.scenarioId })
+            .from(challenges)
+            .where(eq(challenges.id, data.challengeId))
+            .limit(1);
+          if (!challenge) return;
+
+          const [scenario] = await db
+            .select()
+            .from(scenarios)
+            .where(eq(scenarios.id, challenge.scenarioId))
+            .limit(1);
+          if (!scenario) return;
+
+          socket.emit("challenge:start", {
+            scenario: {
+              id: scenario.id,
+              scenario_text: scenario.scenarioText,
+              question_prompt: scenario.questionPrompt,
+              market_data: scenario.marketData,
+              difficulty: scenario.difficulty,
+            },
+          });
+        } catch (err) {
+          console.error("Error fetching challenge scenario:", err);
+        }
+      }
+    );
+
     // C2: challenge:cancel handler
     socket.on("challenge:cancel", () => {
       removeFromQueue(socket.id);
@@ -269,9 +304,21 @@ app.prepare().then(() => {
     // C3: challenge:submit handler
     socket.on(
       "challenge:submit",
-      async (data: { challengeId: string; response: string }) => {
-        const userId = socketUserMap.get(socket.id);
-        if (!userId || !data?.challengeId) return;
+      async (data: { challengeId: string; response: string; userId?: string }) => {
+        let userId = socketUserMap.get(socket.id);
+        // Fallback: use userId from event data if socket mapping is stale
+        if (!userId && data?.userId) {
+          userId = data.userId;
+          socketUserMap.set(socket.id, userId);
+          userSocketMap.set(userId, socket.id);
+          console.log(`Re-mapped socket ${socket.id} to user ${userId} from submit data`);
+        }
+        if (!userId || !data?.challengeId) {
+          console.log("challenge:submit rejected — no userId or challengeId", { userId, data });
+          return;
+        }
+        console.log(`challenge:submit from ${userId} for challenge ${data.challengeId}`);
+        try {
 
         // Update participant with response
         await db
@@ -284,10 +331,14 @@ app.prepare().then(() => {
             )
           );
 
-        // Notify opponent
-        const roomSockets = challengeRoomMap.get(data.challengeId);
-        if (roomSockets) {
-          const opponentSocketId = roomSockets.find((s) => s !== socket.id);
+        // Notify opponent using current socket IDs
+        const participantRows = await db
+          .select({ odUserId: challengeParticipants.userId })
+          .from(challengeParticipants)
+          .where(eq(challengeParticipants.challengeId, data.challengeId));
+        const opponentUserId = participantRows.find((p) => p.odUserId !== userId)?.odUserId;
+        if (opponentUserId) {
+          const opponentSocketId = userSocketMap.get(opponentUserId);
           if (opponentSocketId) {
             const opponentSocket = challengeNs.sockets.get(opponentSocketId);
             if (opponentSocket) {
@@ -391,30 +442,34 @@ app.prepare().then(() => {
           await awardXpDirect(winnerId, 50, "challenge_win", data.challengeId);
           await awardXpDirect(loserId, 10, "challenge_loss", data.challengeId);
 
-          // Emit results to both sockets
-          if (roomSockets) {
-            for (const sid of roomSockets) {
-              const s = challengeNs.sockets.get(sid);
-              if (!s) continue;
-              const socketUserId = socketUserMap.get(sid);
-              const isWinner = socketUserId === winnerId;
-              const myResult = results.find((r) => r.userId === socketUserId);
-              const opponentResult = results.find(
-                (r) => r.userId !== socketUserId
-              );
+          // Emit results to both participants using current socket IDs
+          console.log("Emitting results. Winner:", winnerId, "Participants:", results.map(r => r.userId));
+          for (const r of results) {
+            const currentSocketId = userSocketMap.get(r.userId);
+            console.log(`  User ${r.userId}: socketId=${currentSocketId}, score=${r.score}`);
+            if (!currentSocketId) { console.log(`  SKIP — no socket for user ${r.userId}`); continue; }
+            const s = challengeNs.sockets.get(currentSocketId);
+            if (!s) continue;
+            const isWinner = r.userId === winnerId;
+            const opponentResult = results.find(
+              (o) => o.userId !== r.userId
+            );
 
-              s.emit("challenge:results", {
-                winner: isWinner ? "you" : "opponent",
-                yourScore: myResult?.score ?? 0,
-                opponentScore: opponentResult?.score ?? 0,
-                xpAwarded: isWinner ? 50 : 10,
-                opponentResponse: opponentResult?.responseText || "",
-              });
-            }
+            s.emit("challenge:results", {
+              winner: isWinner ? "you" : "opponent",
+              yourScore: r.score ?? 0,
+              opponentScore: opponentResult?.score ?? 0,
+              xpAwarded: isWinner ? 50 : 10,
+              opponentResponse: opponentResult?.responseText || "",
+            });
           }
 
           // Clean up room mapping
           challengeRoomMap.delete(data.challengeId);
+        }
+        } catch (err) {
+          console.error("challenge:submit error:", err);
+          socket.emit("challenge:error", { message: "Failed to process submission" });
         }
       }
     );

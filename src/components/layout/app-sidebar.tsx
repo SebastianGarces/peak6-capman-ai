@@ -3,8 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Home, BookOpen, Swords, MessageSquare, Trophy, User, Menu, X, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  Home,
+  BookOpen,
+  Swords,
+  MessageSquare,
+  Trophy,
+  User,
+  GraduationCap,
+  Menu,
+  X,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { slideInLeft, overlayFade } from "@/lib/motion";
 
 const navItems = [
@@ -16,106 +27,130 @@ const navItems = [
   { href: "/profile", label: "Profile", icon: User },
 ];
 
-function NavContent({ onClose }: { onClose?: () => void }) {
-  const pathname = usePathname();
+interface AppSidebarProps {
+  userRole?: string;
+}
 
-  return (
+export function AppSidebar({ userRole }: AppSidebarProps) {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
+
+  const navContent = (
     <>
-      <div className="flex h-14 items-center justify-between border-b border-[hsl(220,30%,20%)] px-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <span className="text-xl font-bold text-gradient-primary">CapMan AI</span>
-        </div>
-        {onClose && (
-          <button
-            className="md:hidden p-1"
-            onClick={onClose}
-            aria-label="Close navigation"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
+      {/* Logo */}
+      <div className="mb-8 px-3">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <span className="text-sm font-bold text-white">C</span>
+          </div>
+          <span className="text-lg font-bold tracking-tight">
+            Cap<span className="text-primary">Man</span>
+          </span>
+        </Link>
       </div>
-      <nav className="flex-1 space-y-1 p-2" aria-label="Main navigation">
+
+      {/* Nav Links */}
+      <nav className="flex flex-1 flex-col gap-1 px-2" role="navigation">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           const Icon = item.icon;
+          const active = isActive(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              onClick={onClose}
-              className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] ${
-                isActive
-                  ? "text-primary"
-                  : "text-slate-400 hover:text-white hover:bg-white/10"
-              }`}
-              aria-current={isActive ? "page" : undefined}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="active-nav"
-                  className="absolute inset-0 rounded-lg bg-primary/25 border border-primary/30"
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200",
+                active
+                  ? "bg-primary-muted text-primary"
+                  : "text-text-muted hover:text-text hover:bg-surface-hover"
               )}
-              <Icon className="relative z-10 h-5 w-5" />
-              <span className="relative z-10">{item.label}</span>
+            >
+              <Icon
+                className={cn(
+                  "h-[18px] w-[18px] transition-colors",
+                  active ? "text-primary" : "text-text-dim group-hover:text-text-muted"
+                )}
+              />
+              {item.label}
             </Link>
           );
         })}
       </nav>
+
+      {/* Educator Link */}
+      {(userRole === "educator" || userRole === "admin") && (
+        <div className="mt-auto border-t border-surface-border px-2 pt-3">
+          <Link
+            href="/educator"
+            onClick={() => setMobileOpen(false)}
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200",
+              pathname.startsWith("/educator")
+                ? "bg-amber-muted text-amber"
+                : "text-text-muted hover:text-text hover:bg-surface-hover"
+            )}
+          >
+            <GraduationCap className="h-[18px] w-[18px]" />
+            Educator
+          </Link>
+        </div>
+      )}
     </>
   );
-}
-
-export function AppSidebar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex md:w-[220px] md:flex-col md:fixed md:inset-y-0 md:left-0 bg-bg-deep border-r border-surface-border py-5 z-40">
+        {navContent}
+      </aside>
+
+      {/* Mobile Hamburger */}
       <button
-        className="fixed top-3 left-3 z-50 rounded-md bg-card p-2 md:hidden"
         onClick={() => setMobileOpen(true)}
+        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-surface-border md:hidden cursor-pointer"
         aria-label="Open navigation"
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-5 w-5 text-text-muted" />
       </button>
 
-      {/* Mobile overlay + sidebar with AnimatePresence */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
             <motion.div
-              key="overlay"
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden"
               variants={overlayFade}
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="fixed inset-0 z-40 bg-black/50 md:hidden"
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
-              key="sidebar"
+              className="fixed inset-y-0 left-0 z-50 w-[260px] bg-bg-deep border-r border-surface-border py-5 flex flex-col md:hidden"
               variants={slideInLeft}
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[hsl(220,30%,20%)] bg-[hsl(230,45%,9%)] md:hidden"
             >
-              <NavContent onClose={() => setMobileOpen(false)} />
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="absolute right-3 top-4 rounded-lg p-1.5 text-text-dim hover:text-text cursor-pointer"
+                aria-label="Close navigation"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              {navContent}
             </motion.aside>
           </>
         )}
       </AnimatePresence>
-
-      {/* Desktop sidebar */}
-      <aside
-        className="hidden md:flex h-full w-64 flex-col border-r border-[hsl(220,30%,20%)] bg-[hsl(230,45%,9%)]"
-      >
-        <NavContent />
-      </aside>
     </>
   );
 }

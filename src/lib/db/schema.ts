@@ -85,6 +85,7 @@ export const skillObjectives = pgTable(
     code: text("code").notNull().unique(),
     name: text("name").notNull(),
     description: text("description").notNull(),
+    studyGuide: text("study_guide"),
     curriculumLevelId: integer("curriculum_level_id")
       .notNull()
       .references(() => curriculumLevels.id),

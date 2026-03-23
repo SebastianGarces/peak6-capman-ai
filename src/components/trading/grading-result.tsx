@@ -222,8 +222,8 @@ export function GradingResult({
                       <span className="text-xs font-semibold text-text">
                         Score: <span className={cn(
                           "font-mono",
-                          probingResults[i].score >= 7 ? "text-green" : probingResults[i].score >= 4 ? "text-amber" : "text-red"
-                        )}>{probingResults[i].score}/10</span>
+                          probingResults[i].score >= 70 ? "text-green" : probingResults[i].score >= 40 ? "text-amber" : "text-red"
+                        )}>{probingResults[i].score}/100</span>
                       </span>
                     </div>
                     <p className="text-xs text-text-muted leading-relaxed">

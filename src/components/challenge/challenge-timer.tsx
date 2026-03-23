@@ -30,9 +30,9 @@ export function ChallengeTimer({ duration, onExpire }: ChallengeTimerProps) {
   const radius = 28;
   const circumference = 2 * Math.PI * radius;
   const strokeColor =
-    timeLeft <= 60
+    timeLeft <= 30
       ? "hsl(0,72%,51%)"
-      : timeLeft <= 120
+      : timeLeft <= 60
         ? "hsl(48,96%,53%)"
         : "hsl(142,71%,45%)";
   const dashOffset = circumference * (1 - timeLeft / duration);
