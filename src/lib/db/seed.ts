@@ -1,6 +1,6 @@
 import { db } from "./index";
-import { curriculumLevels, skillObjectives } from "./schema";
-import { eq } from "drizzle-orm";
+import { curriculumLevels, skillObjectives, scenarios } from "./schema";
+import { eq, like } from "drizzle-orm";
 
 const CURRICULUM_LEVELS = [
   { levelNumber: 1, name: "Foundation", description: "Calls, puts, strike, expiration, premium, moneyness" },
@@ -28,6 +28,200 @@ const SKILL_OBJECTIVES = [
   { code: "OBJ-010", name: "Construct multi-leg trade thesis", description: "Construct multi-leg trade thesis", levelNumber: 7 },
   { code: "OBJ-011", name: "Identify adjustment triggers", description: "Identify adjustment triggers (stop loss, roll conditions)", levelNumber: 8 },
   { code: "OBJ-012", name: "Evaluate portfolio-level Greek exposure", description: "Evaluate portfolio-level Greek exposure", levelNumber: 9 },
+];
+
+// ─── Seed Scenarios (2 per level for levels 1-3) ────────
+const SEED_SCENARIOS = [
+  // ── Level 1: Foundation — OBJ-001 (Moneyness) ──
+  {
+    levelNumber: 1,
+    scenarioText:
+      "You are a junior options analyst reviewing the AAPL options chain after the stock closed at $185.50 following a mixed earnings report. The market is relatively calm with the VIX at 16.2. Your portfolio manager wants you to classify several options by moneyness to prepare a report for the morning meeting. The current option chain shows the following contracts expiring in 30 days: a $170 call trading at $16.80/$17.20 with 92 delta, a $185 call trading at $5.20/$5.60 with 52 delta, a $200 call trading at $1.10/$1.40 with 18 delta, a $170 put trading at $0.45/$0.70 with -8 delta, a $185 put trading at $4.80/$5.20 with -48 delta, and a $200 put trading at $15.50/$16.00 with -82 delta. Implied volatility across the chain is approximately 28%. The stock has been trading in a $175-$195 range for the past two months.",
+    questionPrompt:
+      "Classify each of the six options listed above as in-the-money (ITM), at-the-money (ATM), or out-of-the-money (OTM). Explain your reasoning for each classification and describe how moneyness relates to the delta values shown.",
+    marketData: {
+      underlying: "AAPL",
+      currentPrice: 185.5,
+      iv: 0.28,
+      ivRank: 35,
+      daysToExpiration: 30,
+      optionChain: [
+        { strike: 170, type: "call", bid: 16.8, ask: 17.2, delta: 0.92, theta: -0.03, vega: 0.08 },
+        { strike: 185, type: "call", bid: 5.2, ask: 5.6, delta: 0.52, theta: -0.06, vega: 0.18 },
+        { strike: 200, type: "call", bid: 1.1, ask: 1.4, delta: 0.18, theta: -0.04, vega: 0.12 },
+        { strike: 170, type: "put", bid: 0.45, ask: 0.7, delta: -0.08, theta: -0.02, vega: 0.06 },
+        { strike: 185, type: "put", bid: 4.8, ask: 5.2, delta: -0.48, theta: -0.06, vega: 0.18 },
+        { strike: 200, type: "put", bid: 15.5, ask: 16.0, delta: -0.82, theta: -0.03, vega: 0.08 },
+      ],
+    },
+    rubric: {
+      criteria: [
+        { criterion: "Correctly classifies all six options by moneyness", weight: 0.4, max_score: 40 },
+        { criterion: "Explains the relationship between strike price and current price for each", weight: 0.3, max_score: 30 },
+        { criterion: "Connects delta magnitude to moneyness status", weight: 0.3, max_score: 30 },
+      ],
+    },
+    targetObjectives: ["OBJ-001"],
+    difficulty: 2,
+    marketRegime: "sideways",
+    qualityScore: 0.92,
+  },
+  // ── Level 1: Foundation — OBJ-002 (Intrinsic/Extrinsic Value) ──
+  {
+    levelNumber: 1,
+    scenarioText:
+      "You are working at a retail brokerage help desk and a client calls asking about the value breakdown of their MSFT options position. MSFT is currently trading at $420.75. The client holds the following positions: a long $400 call expiring in 45 days currently priced at $28.50 (bid $28.20, ask $28.80), and a long $430 put expiring in 45 days currently priced at $17.30 (bid $17.00, ask $17.60). Implied volatility on MSFT is 24%, and the VIX is at 14.8. The stock recently rallied from $395 to $420 over two weeks on strong cloud revenue guidance. The client wants to understand how much of each option's price is 'real' value versus time value, and whether the time value component justifies holding through expiration or selling now.",
+    questionPrompt:
+      "Calculate the intrinsic value and extrinsic (time) value for both the $400 call and the $430 put. Explain what each component represents and advise the client on how time decay might affect these values as expiration approaches.",
+    marketData: {
+      underlying: "MSFT",
+      currentPrice: 420.75,
+      iv: 0.24,
+      ivRank: 30,
+      daysToExpiration: 45,
+      optionChain: [
+        { strike: 400, type: "call", bid: 28.2, ask: 28.8, delta: 0.78, theta: -0.08, vega: 0.22 },
+        { strike: 430, type: "put", bid: 17.0, ask: 17.6, delta: -0.62, theta: -0.09, vega: 0.24 },
+      ],
+    },
+    rubric: {
+      criteria: [
+        { criterion: "Correctly calculates intrinsic value for both options", weight: 0.35, max_score: 35 },
+        { criterion: "Correctly calculates extrinsic value for both options", weight: 0.35, max_score: 35 },
+        { criterion: "Explains time decay impact and provides sound advice", weight: 0.3, max_score: 30 },
+      ],
+    },
+    targetObjectives: ["OBJ-002"],
+    difficulty: 3,
+    marketRegime: "bull_quiet",
+    qualityScore: 0.9,
+  },
+  // ── Level 2: Greeks Basics — OBJ-003 (Delta) ──
+  {
+    levelNumber: 2,
+    scenarioText:
+      "You are a trainee on a derivatives desk and your mentor asks you to evaluate the directional exposure of a client's NVDA options position. NVDA is trading at $875.00 after a strong AI-related news cycle. The client owns 10 contracts of the $850 call (delta 0.68, theta -0.42, vega 0.95) and is short 5 contracts of the $900 call (delta 0.35, theta -0.38, vega 0.88). Both expire in 21 days. Implied volatility is 42% with an IV rank of 65, reflecting elevated but not extreme vol. The stock moved up $30 yesterday and the client wants to understand how their portfolio value changes with further moves in the underlying. Each contract represents 100 shares.",
+    questionPrompt:
+      "Calculate the net delta exposure of the client's combined position in terms of equivalent shares. Explain what this delta tells us about the position's directional bias, and describe how the position's delta would change if NVDA moved up another $20 versus down $20.",
+    marketData: {
+      underlying: "NVDA",
+      currentPrice: 875.0,
+      iv: 0.42,
+      ivRank: 65,
+      daysToExpiration: 21,
+      optionChain: [
+        { strike: 850, type: "call", bid: 52.3, ask: 53.1, delta: 0.68, theta: -0.42, vega: 0.95 },
+        { strike: 900, type: "call", bid: 22.5, ask: 23.3, delta: 0.35, theta: -0.38, vega: 0.88 },
+      ],
+    },
+    rubric: {
+      criteria: [
+        { criterion: "Correctly calculates net delta in equivalent shares", weight: 0.35, max_score: 35 },
+        { criterion: "Explains directional bias and P&L sensitivity to underlying moves", weight: 0.35, max_score: 35 },
+        { criterion: "Describes how delta changes (gamma effect) with price movement", weight: 0.3, max_score: 30 },
+      ],
+    },
+    targetObjectives: ["OBJ-003"],
+    difficulty: 4,
+    marketRegime: "bull_volatile",
+    qualityScore: 0.93,
+  },
+  // ── Level 2: Greeks Basics — OBJ-004/OBJ-005 (Theta & Vega) ──
+  {
+    levelNumber: 2,
+    scenarioText:
+      "You manage a small options portfolio and hold two positions in AMZN, currently trading at $185.20. Position A is a long $185 straddle (long the $185 call at $6.40 and long the $185 put at $6.10) expiring in 7 days. Position B is a long $185 straddle (long the $185 call at $10.80 and long the $185 put at $10.50) expiring in 45 days. AMZN has an earnings announcement in 5 days. Current IV is 38% (IV rank 72). The 7-day options have theta of -0.28 per contract and vega of 0.12, while the 45-day options have theta of -0.11 per contract and vega of 0.32. You are concerned about the interplay between time decay and potential volatility crush after earnings.",
+    questionPrompt:
+      "Compare the theta and vega exposures of Position A versus Position B. Explain which position is more vulnerable to time decay over the next week, which benefits more from a volatility spike before earnings, and what happens to each position if IV drops by 10 percentage points after the earnings announcement.",
+    marketData: {
+      underlying: "AMZN",
+      currentPrice: 185.2,
+      iv: 0.38,
+      ivRank: 72,
+      daysToExpiration: 7,
+      optionChain: [
+        { strike: 185, type: "call", bid: 6.2, ask: 6.6, delta: 0.52, theta: -0.28, vega: 0.12 },
+        { strike: 185, type: "put", bid: 5.9, ask: 6.3, delta: -0.48, theta: -0.28, vega: 0.12 },
+        { strike: 185, type: "call", bid: 10.6, ask: 11.0, delta: 0.54, theta: -0.11, vega: 0.32 },
+        { strike: 185, type: "put", bid: 10.3, ask: 10.7, delta: -0.46, theta: -0.11, vega: 0.32 },
+      ],
+    },
+    rubric: {
+      criteria: [
+        { criterion: "Correctly compares theta exposure and identifies near-term straddle as more vulnerable", weight: 0.3, max_score: 30 },
+        { criterion: "Correctly compares vega exposure and identifies far-term straddle as more sensitive to IV changes", weight: 0.3, max_score: 30 },
+        { criterion: "Accurately describes IV crush impact on both positions with approximate dollar amounts", weight: 0.4, max_score: 40 },
+      ],
+    },
+    targetObjectives: ["OBJ-004", "OBJ-005"],
+    difficulty: 5,
+    marketRegime: "sideways",
+    qualityScore: 0.91,
+  },
+  // ── Level 3: Single-Leg Strategies — Covered Call ──
+  {
+    levelNumber: 3,
+    scenarioText:
+      "You are advising a conservative investor who owns 500 shares of JNJ purchased at $155.00. JNJ currently trades at $162.30 in a low-volatility environment (IV 18%, IV rank 22, VIX 13.5). The stock has been range-bound between $155 and $168 for the past three months. The investor generates $3,200/year in dividends from the position and wants to enhance income without taking on significant additional risk. The next ex-dividend date is in 6 weeks. Available call options expiring in 45 days include: $165 call at $1.85/$2.15 (delta 0.35), $170 call at $0.65/$0.90 (delta 0.15), and $175 call at $0.20/$0.40 (delta 0.05). The investor is willing to sell the shares at $170 or above but would prefer to keep them for the dividend.",
+    questionPrompt:
+      "Recommend a covered call strategy for this investor. Specify which strike you would sell and how many contracts. Explain the trade-offs between income generation and upside cap, calculate the maximum profit and breakeven, and address the dividend risk consideration.",
+    marketData: {
+      underlying: "JNJ",
+      currentPrice: 162.3,
+      iv: 0.18,
+      ivRank: 22,
+      daysToExpiration: 45,
+      optionChain: [
+        { strike: 165, type: "call", bid: 1.85, ask: 2.15, delta: 0.35, theta: -0.03, vega: 0.08 },
+        { strike: 170, type: "call", bid: 0.65, ask: 0.9, delta: 0.15, theta: -0.02, vega: 0.05 },
+        { strike: 175, type: "call", bid: 0.2, ask: 0.4, delta: 0.05, theta: -0.01, vega: 0.02 },
+      ],
+    },
+    rubric: {
+      criteria: [
+        { criterion: "Selects appropriate strike with clear reasoning for the choice", weight: 0.3, max_score: 30 },
+        { criterion: "Correctly calculates max profit, premium income, and breakeven", weight: 0.3, max_score: 30 },
+        { criterion: "Discusses assignment risk near ex-dividend date for ITM calls", weight: 0.2, max_score: 20 },
+        { criterion: "Evaluates income enhancement vs upside cap trade-off", weight: 0.2, max_score: 20 },
+      ],
+    },
+    targetObjectives: ["OBJ-001", "OBJ-002"],
+    difficulty: 4,
+    marketRegime: "sideways",
+    qualityScore: 0.94,
+  },
+  // ── Level 3: Single-Leg Strategies — Cash-Secured Put ──
+  {
+    levelNumber: 3,
+    scenarioText:
+      "You are an options-savvy investor who has been watching META, currently trading at $505.80. The stock recently pulled back 8% from its all-time high of $550 after a broader tech selloff, but fundamentals remain strong with revenue growing 22% year-over-year. IV has spiked to 34% (IV rank 78) due to the selloff. You have $50,000 in cash and would be happy to own 100 shares of META at a lower price. Available put options expiring in 30 days include: $480 put at $5.20/$5.80 (delta -0.22), $490 put at $8.40/$9.00 (delta -0.30), and $500 put at $13.50/$14.20 (delta -0.40). You want to generate income if the stock stabilizes, or acquire shares at a discount if it continues falling.",
+    questionPrompt:
+      "Design a cash-secured put strategy for this situation. Select a strike price, justify your choice, calculate the effective purchase price if assigned, determine the annualized return if the put expires worthless, and explain how elevated implied volatility benefits this strategy.",
+    marketData: {
+      underlying: "META",
+      currentPrice: 505.8,
+      iv: 0.34,
+      ivRank: 78,
+      daysToExpiration: 30,
+      optionChain: [
+        { strike: 480, type: "put", bid: 5.2, ask: 5.8, delta: -0.22, theta: -0.12, vega: 0.35 },
+        { strike: 490, type: "put", bid: 8.4, ask: 9.0, delta: -0.3, theta: -0.15, vega: 0.4 },
+        { strike: 500, type: "put", bid: 13.5, ask: 14.2, delta: -0.4, theta: -0.18, vega: 0.45 },
+      ],
+    },
+    rubric: {
+      criteria: [
+        { criterion: "Selects appropriate strike and calculates capital requirement", weight: 0.25, max_score: 25 },
+        { criterion: "Calculates effective purchase price if assigned", weight: 0.25, max_score: 25 },
+        { criterion: "Calculates annualized return if put expires worthless", weight: 0.25, max_score: 25 },
+        { criterion: "Explains how elevated IV increases premium income for put sellers", weight: 0.25, max_score: 25 },
+      ],
+    },
+    targetObjectives: ["OBJ-001", "OBJ-002"],
+    difficulty: 5,
+    marketRegime: "bear_volatile",
+    qualityScore: 0.91,
+  },
 ];
 
 export async function seed() {
@@ -74,6 +268,36 @@ export async function seed() {
         name: obj.name,
         description: obj.description,
         curriculumLevelId: levelId,
+      });
+    }
+  }
+
+  console.log("Seeding scenarios...");
+
+  for (const s of SEED_SCENARIOS) {
+    // Check existence by matching a substring of scenarioText
+    const snippet = s.scenarioText.slice(0, 80);
+    const existing = await db
+      .select({ id: scenarios.id })
+      .from(scenarios)
+      .where(like(scenarios.scenarioText, `${snippet}%`))
+      .limit(1);
+
+    if (existing.length === 0) {
+      const levelId = levelMap.get(s.levelNumber);
+      if (!levelId) throw new Error(`Level ${s.levelNumber} not found for scenario`);
+      await db.insert(scenarios).values({
+        curriculumLevelId: levelId,
+        scenarioText: s.scenarioText,
+        questionPrompt: s.questionPrompt,
+        marketData: s.marketData,
+        rubric: s.rubric,
+        targetObjectives: s.targetObjectives,
+        difficulty: s.difficulty,
+        marketRegime: s.marketRegime,
+        generatedBy: "seed",
+        isActive: true,
+        qualityScore: s.qualityScore,
       });
     }
   }
