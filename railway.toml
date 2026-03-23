@@ -1,2 +1,2 @@
 [deploy]
-startCommand = "npx drizzle-kit migrate && npx tsx src/lib/db/seed.ts && npx tsx server.ts"
+startCommand = "npx tsx server.ts"
