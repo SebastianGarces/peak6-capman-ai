@@ -1,0 +1,5 @@
+.env*
+.claude/
+.factory/logs/
+node_modules/
+python-service/.env
