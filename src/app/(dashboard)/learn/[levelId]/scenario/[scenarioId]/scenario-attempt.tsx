@@ -9,6 +9,8 @@ import { MotionDiv } from "@/components/motion-div";
 import { ScenarioReader } from "@/components/trading/scenario-reader";
 import { ResponseEditor } from "@/components/trading/response-editor";
 import { GradingResult } from "@/components/trading/grading-result";
+import { XpPopup } from "@/components/game/xp-popup";
+import { LevelUpModal } from "@/components/game/level-up-modal";
 import { startScenario, submitResponse, submitProbingResponse } from "@/actions/scenario";
 
 type Phase = "read" | "respond" | "grading" | "summary";
@@ -124,6 +126,8 @@ export function ScenarioAttempt({
   const [gradingScore, setGradingScore] = useState<number | null>(null);
   const [gradingFeedback, setGradingFeedback] = useState<GradingFeedback | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [probingResults, setProbingResults] = useState<Record<number, { score: number; feedback: string }>>({});
+  const [probingError, setProbingError] = useState<string | null>(null);
   const startedRef = useRef(false);
 
   // Start the attempt on mount
@@ -169,10 +173,21 @@ export function ScenarioAttempt({
 
   async function handleProbingResponse(questionIndex: number, response: string) {
     if (!attemptId) return;
+    setProbingError(null);
     try {
-      await submitProbingResponse(attemptId, questionIndex, response);
+      const result = await submitProbingResponse(attemptId, questionIndex, response);
+      if (result && "error" in result) {
+        setProbingError(result.error || "Failed to submit");
+        return;
+      }
+      if (result && "score" in result) {
+        setProbingResults((prev) => ({
+          ...prev,
+          [questionIndex]: { score: result.score as number, feedback: result.feedback as string },
+        }));
+      }
     } catch {
-      // Silent fail for probing — user already sees their answer submitted
+      setProbingError("Failed to submit probing response. Please try again.");
     }
   }
 
@@ -304,6 +319,8 @@ export function ScenarioAttempt({
                     ? handleProbingResponse
                     : undefined
                 }
+                probingResults={probingResults}
+                probingError={probingError}
               />
             </MotionDiv>
           )}

@@ -5,6 +5,7 @@ import { mtssClassifications, users, skillObjectives, scenarioAttempts } from "@
 import { eq, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/auth/utils";
+import { pushNotification } from "@/lib/notifications/store";
 
 export async function getMtssOverview(levelFilter?: number) {
   const session = await auth();
@@ -92,8 +93,12 @@ export async function getInterventionQueue() {
 export async function sendNudge(userId: string, message: string) {
   const session = await auth();
   requireRole(session, 'educator');
-  // For now, just log it. In production, this would send via WebSocket or notification system.
-  console.log(`Nudge sent to ${userId}: ${message}`);
+  pushNotification(userId, {
+    type: "nudge",
+    message,
+    fromEducator: true,
+    createdAt: new Date().toISOString(),
+  });
   return { success: true };
 }
 

@@ -30,6 +30,8 @@ interface GradingResultProps {
   feedback: GradingFeedback;
   levelNumber?: number;
   onAnswerProbing?: (questionIndex: number, response: string) => void;
+  probingResults?: Record<number, { score: number; feedback: string }>;
+  probingError?: string | null;
 }
 
 function ScoreDisplay({ score }: { score: number }) {
@@ -70,6 +72,8 @@ export function GradingResult({
   feedback,
   levelNumber,
   onAnswerProbing,
+  probingResults,
+  probingError,
 }: GradingResultProps) {
   const [showCriteria, setShowCriteria] = useState(false);
   const [probingAnswers, setProbingAnswers] = useState<Record<number, string>>({});
@@ -202,14 +206,36 @@ export function GradingResult({
               Follow-up Questions
             </h3>
           </div>
+          {probingError && (
+            <div className="rounded-lg border border-red/30 bg-red-muted px-3 py-2 text-xs text-red">
+              {probingError}
+            </div>
+          )}
           {probingQuestions.map((q, i) => (
             <div key={i} className="space-y-2">
               <p className="text-sm text-text leading-relaxed font-medium">{q}</p>
               {submittedProbing.has(i) ? (
-                <div className="flex items-center gap-2 text-xs text-green">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Answer submitted
-                </div>
+                probingResults?.[i] ? (
+                  <div className="rounded-lg border border-surface-border bg-surface p-3 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-3.5 w-3.5 text-green flex-shrink-0" />
+                      <span className="text-xs font-semibold text-text">
+                        Score: <span className={cn(
+                          "font-mono",
+                          probingResults[i].score >= 7 ? "text-green" : probingResults[i].score >= 4 ? "text-amber" : "text-red"
+                        )}>{probingResults[i].score}/10</span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      {probingResults[i].feedback}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-green">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Answer submitted
+                  </div>
+                )
               ) : (
                 <div className="space-y-2">
                   <textarea
