@@ -128,6 +128,10 @@ export function ScenarioAttempt({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [probingResults, setProbingResults] = useState<Record<number, { score: number; feedback: string }>>({});
   const [probingError, setProbingError] = useState<string | null>(null);
+  const [xpAwarded, setXpAwarded] = useState(0);
+  const [showXpPopup, setShowXpPopup] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(1);
   const startedRef = useRef(false);
 
   // Start the attempt on mount
@@ -165,6 +169,16 @@ export function ScenarioAttempt({
       setGradingScore(result.score);
       setGradingFeedback(result.feedback as GradingFeedback);
       setPhase("summary");
+
+      // Show XP popup and level-up modal
+      if ("xpAwarded" in result && (result.xpAwarded as number) > 0) {
+        setXpAwarded(result.xpAwarded as number);
+        setShowXpPopup(true);
+      }
+      if ("leveledUp" in result && result.leveledUp) {
+        setNewLevel(result.newLevel as number);
+        setShowLevelUp(true);
+      }
     } catch {
       setSubmitError("Submission failed. Please try again.");
       setPhase("respond");
@@ -326,6 +340,22 @@ export function ScenarioAttempt({
           )}
         </div>
       </AnimatePresence>
+
+      {/* XP Popup */}
+      <div className="relative">
+        <XpPopup
+          amount={xpAwarded}
+          show={showXpPopup}
+          onComplete={() => setShowXpPopup(false)}
+        />
+      </div>
+
+      {/* Level Up Modal */}
+      <LevelUpModal
+        open={showLevelUp}
+        onClose={() => setShowLevelUp(false)}
+        newLevel={newLevel}
+      />
     </div>
   );
 }

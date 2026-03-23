@@ -1,10 +1,13 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { scenarioAttempts, scenarios, attemptObjectives, skillObjectives } from "@/lib/db/schema";
+import { scenarioAttempts, scenarios, attemptObjectives, skillObjectives, users, curriculumLevels } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
-import { eq, inArray } from "drizzle-orm";
+import { eq, and, inArray, isNotNull, sql } from "drizzle-orm";
 import { gradeResponse, evaluateProbing } from "@/lib/ai/client";
+import { calculateXpAward } from "@/lib/game/xp";
+import { awardXp } from "./gamification";
+import { classifyMtss } from "@/lib/mtss/classifier";
 
 export async function startScenario(scenarioId: string) {
   const session = await auth();
@@ -73,6 +76,15 @@ export async function submitResponse(attemptId: string, responseText: string) {
             demonstrated,
           });
         }
+
+        // Task #5: Call MTSS classifier after creating attempt_objectives
+        try {
+          for (const obj of objectives) {
+            await classifyMtss((session.user as any).id, obj.id);
+          }
+        } catch {
+          // Classification failure should not block the response
+        }
       }
     }
   } catch {
@@ -86,18 +98,105 @@ export async function submitResponse(attemptId: string, responseText: string) {
     };
   }
 
+  // Task #7: Set finalScore = score as default
   await db
     .update(scenarioAttempts)
     .set({
       responseText,
       score,
+      finalScore: score,
       aiFeedback: feedback,
       probingQuestions: feedback.probing_questions || [],
       updatedAt: new Date(),
     })
     .where(eq(scenarioAttempts.id, attemptId));
 
-  return { score, feedback };
+  // Task #4: Award XP after grading
+  const xpResult = calculateXpAward(score);
+  const xpAwardResult = await awardXp(
+    (session.user as any).id,
+    xpResult.total,
+    "scenario_attempt",
+    attemptId
+  );
+
+  // Task #6: Check level progression
+  const progression = await checkLevelProgression((session.user as any).id);
+
+  return {
+    score,
+    feedback,
+    xpAwarded: xpResult.total,
+    leveledUp: xpAwardResult.leveledUp,
+    newLevel: xpAwardResult.newLevel,
+    levelAdvanced: progression.advanced,
+    newCurriculumLevel: progression.newLevel,
+  };
+}
+
+// Task #6: Level progression check
+async function checkLevelProgression(userId: string): Promise<{ advanced: boolean; newLevel?: number }> {
+  try {
+    // Get user's current curriculum level
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user) return { advanced: false };
+
+    const currentLevel = user.currentCurriculumLevel;
+    if (currentLevel >= 10) return { advanced: false };
+
+    // Get the curriculum level record for mastery threshold and min attempts
+    const [levelRecord] = await db
+      .select()
+      .from(curriculumLevels)
+      .where(eq(curriculumLevels.levelNumber, currentLevel))
+      .limit(1);
+    if (!levelRecord) return { advanced: false };
+
+    // Get all scenarios for this curriculum level
+    const levelScenarios = await db
+      .select({ id: scenarios.id })
+      .from(scenarios)
+      .where(eq(scenarios.curriculumLevelId, levelRecord.id));
+
+    if (levelScenarios.length === 0) return { advanced: false };
+
+    const scenarioIds = levelScenarios.map((s) => s.id);
+
+    // Count user's graded attempts for those scenarios
+    const [attemptStats] = await db
+      .select({
+        count: sql<number>`cast(count(*) as integer)`,
+        avgScore: sql<number>`cast(avg(${scenarioAttempts.score}) as integer)`,
+      })
+      .from(scenarioAttempts)
+      .where(
+        and(
+          eq(scenarioAttempts.userId, userId),
+          inArray(scenarioAttempts.scenarioId, scenarioIds),
+          isNotNull(scenarioAttempts.score)
+        )
+      );
+
+    if (!attemptStats) return { advanced: false };
+
+    const { count, avgScore } = attemptStats;
+
+    if (
+      count >= levelRecord.minAttemptsRequired &&
+      avgScore >= levelRecord.masteryThreshold
+    ) {
+      const newLevel = currentLevel + 1;
+      await db
+        .update(users)
+        .set({ currentCurriculumLevel: newLevel, updatedAt: new Date() })
+        .where(eq(users.id, userId));
+      return { advanced: true, newLevel };
+    }
+
+    return { advanced: false };
+  } catch {
+    return { advanced: false };
+  }
 }
 
 export async function submitProbingResponse(
@@ -124,16 +223,20 @@ export async function submitProbingResponse(
       probingResponse: response,
     });
 
+    // Task #7: Compute finalScore as weighted average of initial score and probing score
+    const finalScore = Math.round((attempt.score || 0) * 0.7 + result.score * 0.3);
+
     await db
       .update(scenarioAttempts)
       .set({
         probingResponse: response,
         probingScore: result.score,
+        finalScore,
         updatedAt: new Date(),
       })
       .where(eq(scenarioAttempts.id, attemptId));
 
-    return { score: result.score, feedback: result.feedback };
+    return { score: result.score, feedback: result.feedback, finalScore };
   } catch {
     return { error: "Probing evaluation unavailable" };
   }

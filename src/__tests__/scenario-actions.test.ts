@@ -10,13 +10,15 @@ vi.mock("@/lib/db", () => ({
     })),
     update: vi.fn(() => ({
       set: vi.fn(() => ({
-        where: vi.fn(),
+        where: vi.fn(() => ({
+          returning: vi.fn(() => [{ id: "user-1", xp: 50, level: 1 }]),
+        })),
       })),
     })),
     select: vi.fn(() => ({
       from: vi.fn(() => ({
         where: vi.fn(() => ({
-          limit: vi.fn(() => [{ id: "attempt-123", scenarioId: "scenario-1", responseText: "", probingQuestions: [] }]),
+          limit: vi.fn(() => [{ id: "attempt-123", scenarioId: "scenario-1", responseText: "", probingQuestions: [], currentCurriculumLevel: 1 }]),
         })),
       })),
     })),
@@ -26,6 +28,22 @@ vi.mock("@/lib/db", () => ({
 // Mock auth
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(() => ({ user: { id: "user-1", role: "learner" } })),
+}));
+
+// Mock AI client to fall through to catch block (mock grading)
+vi.mock("@/lib/ai/client", () => ({
+  gradeResponse: vi.fn(() => { throw new Error("AI unavailable"); }),
+  evaluateProbing: vi.fn(() => { throw new Error("AI unavailable"); }),
+}));
+
+// Mock gamification
+vi.mock("@/actions/gamification", () => ({
+  awardXp: vi.fn(() => ({ newXp: 110, newLevel: 1, leveledUp: false })),
+}));
+
+// Mock MTSS classifier
+vi.mock("@/lib/mtss/classifier", () => ({
+  classifyMtss: vi.fn(() => 1),
 }));
 
 describe("Scenario server actions", () => {
