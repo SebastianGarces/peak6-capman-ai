@@ -18,9 +18,9 @@ const mockSelect = vi.fn(() => ({ from: mockSelectFrom }));
 
 vi.mock("@/lib/db", () => ({
   db: {
-    insert: (...args: unknown[]) => mockInsert(...args),
-    update: (...args: unknown[]) => mockUpdate(...args),
-    select: (...args: unknown[]) => mockSelect(...args),
+    insert: mockInsert,
+    update: mockUpdate,
+    select: mockSelect,
   },
 }));
 
@@ -44,12 +44,12 @@ const mockAwardXp = vi.fn(() => ({
   leveledUp: true,
 }));
 vi.mock("@/actions/gamification", () => ({
-  awardXp: (...args: unknown[]) => mockAwardXp(...args),
+  awardXp: mockAwardXp,
 }));
 
 const mockClassifyMtss = vi.fn(() => 1);
 vi.mock("@/lib/mtss/classifier", () => ({
-  classifyMtss: (...args: unknown[]) => mockClassifyMtss(...args),
+  classifyMtss: mockClassifyMtss,
 }));
 
 // Set up mockSelectFrom to return scenario-like object for all queries
@@ -124,7 +124,7 @@ describe("Task #7: Compute finalScore after probing", () => {
 
     // The db.update should have been called with finalScore
     expect(mockUpdate).toHaveBeenCalled();
-    const setCall = mockUpdateSet.mock.calls[0]?.[0];
+    const setCall = (mockUpdateSet.mock.calls as any[][])[0]?.[0];
     if (setCall) {
       expect(setCall).toHaveProperty("finalScore");
     }

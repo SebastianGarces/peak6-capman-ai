@@ -1,55 +1,97 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
-interface SocketContextType {
+interface SocketContextValue {
   challengeSocket: Socket | null;
   notificationSocket: Socket | null;
   isConnected: boolean;
 }
 
-const SocketContext = createContext<SocketContextType>({
+const SocketContext = createContext<SocketContextValue>({
   challengeSocket: null,
   notificationSocket: null,
   isConnected: false,
 });
 
-export function useSocket() {
-  return useContext(SocketContext);
-}
-
-export function SocketProvider({ children }: { children: React.ReactNode }) {
-  const [challengeSocket, setChallengeSocket] = useState<Socket | null>(null);
-  const [notificationSocket, setNotificationSocket] = useState<Socket | null>(null);
+export function SocketProvider({
+  children,
+  userId,
+}: {
+  children: React.ReactNode;
+  userId?: string;
+}) {
   const [isConnected, setIsConnected] = useState(false);
 
-  useEffect(() => {
-    const challengeSock = io("/challenges", {
+  const sockets = useMemo(() => {
+    // Only create sockets on the client
+    if (typeof window === "undefined") return { challenge: null, notification: null };
+
+    const challenge = io("/challenges", {
       autoConnect: true,
       reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
     });
 
-    const notifSock = io("/notifications", {
+    const notification = io("/notifications", {
       autoConnect: true,
       reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
     });
 
-    challengeSock.on("connect", () => setIsConnected(true));
-    challengeSock.on("disconnect", () => setIsConnected(false));
-
-    setChallengeSocket(challengeSock);
-    setNotificationSocket(notifSock);
-
-    return () => {
-      challengeSock.disconnect();
-      notifSock.disconnect();
-    };
+    return { challenge, notification };
   }, []);
 
+  useEffect(() => {
+    const cs = sockets.challenge;
+    if (!cs) return;
+
+    const onConnect = () => {
+      setIsConnected(true);
+      if (userId) {
+        cs.emit("auth", { userId });
+      }
+    };
+    const onDisconnect = () => setIsConnected(false);
+
+    cs.on("connect", onConnect);
+    cs.on("disconnect", onDisconnect);
+
+    // If already connected (reconnect scenario), emit auth
+    if (cs.connected && userId) {
+      cs.emit("auth", { userId });
+    }
+
+    return () => {
+      cs.off("connect", onConnect);
+      cs.off("disconnect", onDisconnect);
+    };
+  }, [sockets.challenge, userId]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      sockets.challenge?.disconnect();
+      sockets.notification?.disconnect();
+    };
+  }, [sockets]);
+
   return (
-    <SocketContext.Provider value={{ challengeSocket, notificationSocket, isConnected }}>
+    <SocketContext.Provider
+      value={{
+        challengeSocket: sockets.challenge,
+        notificationSocket: sockets.notification,
+        isConnected,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );
+}
+
+export function useSocket() {
+  return useContext(SocketContext);
 }

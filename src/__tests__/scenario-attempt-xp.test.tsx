@@ -20,9 +20,9 @@ const mockSubmitResponse = vi.fn(() =>
 const mockSubmitProbingResponse = vi.fn();
 
 vi.mock("@/actions/scenario", () => ({
-  startScenario: (...args: unknown[]) => mockStartScenario(...args),
-  submitResponse: (...args: unknown[]) => mockSubmitResponse(...args),
-  submitProbingResponse: (...args: unknown[]) => mockSubmitProbingResponse(...args),
+  startScenario: mockStartScenario,
+  submitResponse: mockSubmitResponse,
+  submitProbingResponse: mockSubmitProbingResponse,
 }));
 
 // Mock motion/react
